@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { CATEGORY_META } from "@/lib/constants";
 import PaperCard from "@/components/paper-card";
 
-export const revalidate = 300; // 首页 5 分钟 ISR
+export const revalidate = 60; // 首页 ISR：公告等设置变更 60s 内生效
 
 export default async function HomePage() {
   const [cats, latest, announcement] = await Promise.all([

@@ -38,6 +38,9 @@ export async function POST(req: NextRequest) {
     void ip;
     return jsonFail("用户名或密码错误", 401);
   }
+  if (user.disabled) {
+    return jsonFail("该账号已被禁用，请联系管理员", 403);
+  }
 
   clearBlock(key);
   const token = await signSession({ uid: user.id, role: user.role });
