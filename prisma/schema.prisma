@@ -1,0 +1,168 @@
+// 信奥刷题站数据模型 v1
+// 约定：answer 字段仅服务端判分使用，任何读接口不得下发；
+//       题目内容为 Markdown（含 LaTeX / 代码块），渲染统一走 lib/md 管线。
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum QType {
+  CHOICE // 单选
+  MULTI_CHOICE // 多选（答案如 "BD"）
+  JUDGE // 判断（答案 True/False）
+  FILL // 填空（单值）
+  PROGRAM // 编程大题（不判分，仅展示 + 跳外部 OJ）
+}
+
+enum AttemptStatus {
+  STARTED
+  SUBMITTED
+  ABANDONED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  passwordHash String
+  nickname     String?
+  role         Role      @default(USER)
+  disabled     Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  attempts     PaperAttempt[]
+  logs         AnswerLog[]
+  wrongs       WrongQuestion[]
+  favorites    Favorite[]
+}
+
+model Paper {
+  id         String     @id @default(cuid())
+  slug       String     @unique
+  title      String
+  category   String // GESP / CSP-J / CSP-S / NCT-C++ / NCT-KITTEN / OTHER
+  level      String? // GESP: "1".."8"；CSP/NCT 等为空
+  examDate   String? // 如 "2024-06"
+  timeLimit  Int // 分钟
+  totalScore Int
+  desc       String?
+  published  Boolean    @default(true)
+  source     String? // 数据溯源目录（参考项目 papers 目录名）
+  createdAt  DateTime   @default(now())
+  questions  Question[]
+  attempts   PaperAttempt[]
+
+  @@index([category, level])
+  @@index([published])
+}
+
+model Question {
+  id              String  @id @default(cuid())
+  paperId         String
+  seq             Int // 卷内序号
+  type            QType
+  section         String? // CSP: 单项选择题/阅读程序/完善程序；GESP 编程操作题
+  score           Int
+  content         String // Markdown（图片路径导入时已重写为站内 /assets/...）
+  options         Json? // [{ "key": "A", "text": "..." }]
+  answer          String? // 标准答案（服务端判分专用，绝不外发）
+  externalUrl     String? // PROGRAM 题跳转洛谷/OJ 的链接（管理端维护）
+  answersMissing  Boolean @default(false) // 源数据缺答案，判分时不计入
+  createdAt       DateTime @default(now())
+  paper           Paper   @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  attemptAnswers  AttemptAnswer[]
+  logs            AnswerLog[]
+  wrongs          WrongQuestion[]
+  favorites       Favorite[]
+
+  @@unique([paperId, seq])
+  @@index([paperId])
+}
+
+model PaperAttempt {
+  id          String        @id @default(cuid())
+  userId      String
+  paperId     String
+  status      AttemptStatus @default(STARTED)
+  startedAt   DateTime      @default(now())
+  submittedAt DateTime?
+  durationSec Int?
+  earnedScore Int? // 提交时结算（不含缺失答案/大题）
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paper       Paper         @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  answers     AttemptAnswer[]
+
+  @@index([userId, submittedAt])
+  @@index([paperId])
+}
+
+model AttemptAnswer {
+  id         String @id @default(cuid())
+  attemptId  String
+  questionId String
+  given      String? // 用户提交（choice 如 "C"；multi 如 "BD"；judge "True/False"；fill 原文）
+  correct    Boolean? // 判分结果
+  earned     Int    @default(0)
+  attempt    PaperAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question   Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+}
+
+// 刷题流水（每次判分写一条，供统计与错题判定；同时从 PaperAttempt.answers 冗余聚合）
+model AnswerLog {
+  id         String   @id @default(cuid())
+  userId     String
+  questionId String
+  given      String?
+  correct    Boolean
+  earned     Int      @default(0)
+  answeredAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, answeredAt])
+  @@index([questionId])
+}
+
+// 错题本：一道题一条（未掌握状态）。答对累计达到阈值 → masteredAt 置值（转掌握，从错题本移除）
+model WrongQuestion {
+  id         String    @id @default(cuid())
+  userId     String
+  questionId String
+  wrongCount Int       @default(1)
+  masteredAt DateTime? // 非空 = 已掌握
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question   Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+  @@index([userId, masteredAt])
+}
+
+model Favorite {
+  id         String   @id @default(cuid())
+  userId     String
+  questionId String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+  @@index([userId, createdAt])
+}
+
+model AdminSetting {
+  key   String @id
+  value String // 公告、错题掌握阈值等
+}

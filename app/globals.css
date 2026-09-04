@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+:root {
+  --accent: #2563eb;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  color: #1f2937;
+  background: #f8fafc;
+}
+
+/* 题干富文本通用排版（markdown 渲染结果） */
+.md-body {
+  line-height: 1.75;
+  word-break: break-word;
+}
+.md-body p {
+  margin: 0.5rem 0;
+}
+.md-body code {
+  background: #f1f5f9;
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+.md-body pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.md-body pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+.md-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.md-body h1,
+.md-body h2,
+.md-body h3,
+.md-body h4 {
+  font-weight: 600;
+  margin: 0.8rem 0 0.4rem;
+}
+.md-body h1 { font-size: 1.3rem; }
+.md-body h2 { font-size: 1.15rem; }
+.md-body h3 { font-size: 1.05rem; }
+.md-body h4 { font-size: 1rem; }
+.md-body blockquote {
+  border-left: 3px solid #cbd5e1;
+  padding-left: 0.8rem;
+  color: #475569;
+  margin: 0.5rem 0;
+}
+.md-body table {
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+.md-body th,
+.md-body td {
+  border: 1px solid #e2e8f0;
+  padding: 0.3rem 0.6rem;
+}
+.md-body ul,
+.md-body ol {
+  padding-left: 1.4rem;
+  margin: 0.5rem 0;
+}
+.md-body ul { list-style: disc; }
+.md-body ol { list-style: decimal; }
+.md-body a { color: var(--accent); text-decoration: underline; }
+.md-body hr { margin: 1rem 0; border-color: #e2e8f0; }
