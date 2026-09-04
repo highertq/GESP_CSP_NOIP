@@ -34,17 +34,27 @@ export default function SiteHeader() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    let alive = true;
     fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        setMe(d?.data?.user ?? null);
-        setLoaded(true);
+        if (alive) {
+          setMe(d?.data?.user ?? null);
+          setLoaded(true);
+        }
       })
-      .catch(() => setLoaded(true));
-  }, []);
+      .catch(() => {
+        if (alive) setLoaded(true);
+      });
+    return () => {
+      alive = false;
+    };
+    // 路由变化时重新校验登录态：登录/注册/退出后 header 立即刷新，无需手动刷新页面
+  }, [pathname]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
+    setMe(null);
     router.push("/");
     router.refresh();
   }
