@@ -38,13 +38,13 @@ export default async function AdminPage({
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <h1 className="text-xl font-bold">管理后台</h1>
-        <nav className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+        <nav className="flex rounded-lg border border-line overflow-hidden text-sm">
           {TABS.map((t) => (
             <Link
               key={t.key}
               href={`/admin?tab=${t.key}`}
               className={`px-4 py-1.5 ${
-                tab === t.key ? "bg-blue-600 text-white font-medium" : "text-gray-600 hover:bg-gray-50"
+                tab === t.key ? "bg-ink text-white font-medium" : "text-ink-2 hover:bg-surface-2"
               }`}
             >
               {t.label}
@@ -93,33 +93,33 @@ async function Overview() {
     <div className="space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {cards.map(([k, v]) => (
-          <div key={String(k)} className="rounded-xl border border-gray-200 bg-white p-4 text-center">
-            <div className="text-2xl font-bold text-gray-900">{v}</div>
-            <div className="mt-1 text-xs text-gray-400">{k}</div>
+          <div key={String(k)} className="card p-4 text-center">
+            <div className="text-2xl font-bold text-ink">{v}</div>
+            <div className="mt-1 text-xs text-ink-3">{k}</div>
           </div>
         ))}
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-2xl border border-gray-200 bg-white p-5">
+        <section className="card p-5">
           <h2 className="text-sm font-bold mb-3">最近注册</h2>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-line">
             {recentUsers.map((u) => (
               <div key={u.username} className="flex justify-between py-2 text-sm">
-                <span className="text-gray-700">{u.nickname || u.username}</span>
-                <span className="text-xs text-gray-400">{u.createdAt.toLocaleString("zh-CN", { hour12: false })}</span>
+                <span className="text-ink">{u.nickname || u.username}</span>
+                <span className="text-xs text-ink-3">{u.createdAt.toLocaleString("zh-CN", { hour12: false })}</span>
               </div>
             ))}
           </div>
         </section>
-        <section className="rounded-2xl border border-gray-200 bg-white p-5">
+        <section className="card p-5">
           <h2 className="text-sm font-bold mb-3">最近交卷</h2>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-line">
             {recentAttempts.map((a) => (
               <div key={a.id} className="flex justify-between gap-3 py-2 text-sm">
-                <span className="text-gray-700 truncate">
+                <span className="text-ink truncate">
                   {a.user.username} · {a.paper.title}
                 </span>
-                <span className="text-xs text-gray-400 shrink-0">
+                <span className="text-xs text-ink-3 shrink-0">
                   {a.earnedScore ?? "—"}分 · {a.submittedAt?.toLocaleString("zh-CN", { hour12: false })}
                 </span>
               </div>
@@ -147,24 +147,24 @@ async function Papers({ page }: { page: number }) {
 
   return (
     <section className="space-y-3">
-      <p className="text-xs text-gray-400">共 {total} 份试卷 · 下线后前台不可见（题库数据保留）</p>
-      <div className="rounded-2xl border border-gray-200 bg-white divide-y divide-gray-100">
+      <p className="text-xs text-ink-3">共 {total} 份试卷 · 下线后前台不可见（题库数据保留）</p>
+      <div className="card divide-y divide-line">
         {papers.map((p) => (
-          <div key={p.id} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50">
+          <div key={p.id} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-surface-2">
             <span
-              className={`shrink-0 w-2 h-2 rounded-full ${p.published ? "bg-green-500" : "bg-gray-300"}`}
+              className={`shrink-0 w-2 h-2 rounded-full ${p.published ? "bg-ok" : "bg-line-strong"}`}
               title={p.published ? "已上线" : "已下线"}
             />
             <div className="flex-1 min-w-0">
-              <Link href={`/paper/${p.slug}`} className="text-gray-800 hover:text-blue-600 truncate block">
+              <Link href={`/paper/${p.slug}`} className="text-ink hover:text-ink truncate block">
                 {p.title}
               </Link>
-              <div className="text-[11px] text-gray-400">
+              <div className="text-[11px] text-ink-3">
                 {categoryLabel(p.category)}
                 {p.level ? ` ${p.level}级` : ""} · {p._count.questions} 题 · {p.examDate ?? "—"}
               </div>
             </div>
-            <span className="text-xs text-gray-300 shrink-0">{p.slug}</span>
+            <span className="text-xs text-ink-4 shrink-0">{p.slug}</span>
             <PaperToggle paperId={p.id} published={p.published} />
           </div>
         ))}
@@ -176,7 +176,7 @@ async function Papers({ page }: { page: number }) {
               key={n}
               href={`/admin?tab=papers&page=${n}`}
               className={`px-3 py-1 rounded-md border ${
-                n === page ? "bg-blue-600 border-blue-600 text-white" : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                n === page ? "bg-ink border-ink text-white" : "border-line text-ink-2 hover:bg-surface-2"
               }`}
             >
               {n}
@@ -203,17 +203,17 @@ async function Users({ page, currentUserId }: { page: number; currentUserId: str
 
   return (
     <section className="space-y-3">
-      <p className="text-xs text-gray-400">共 {total} 个用户 · 禁用后该账号立即无法登录/交卷</p>
-      <div className="rounded-2xl border border-gray-200 bg-white divide-y divide-gray-100">
+      <p className="text-xs text-ink-3">共 {total} 个用户 · 禁用后该账号立即无法登录/交卷</p>
+      <div className="card divide-y divide-line">
         {users.map((u) => (
-          <div key={u.id} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50">
+          <div key={u.id} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-surface-2">
             <div className="flex-1 min-w-0">
-              <span className="font-medium text-gray-800">
+              <span className="font-medium text-ink">
                 {u.nickname || u.username}
-                {u.disabled && <span className="ml-2 text-[11px] px-1.5 py-0.5 rounded bg-red-50 text-red-500 border border-red-200">已禁用</span>}
-                {u.role === "ADMIN" && <span className="ml-2 text-[11px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-200">管理员</span>}
+                {u.disabled && <span className="ml-2 text-[11px] px-1.5 py-0.5 rounded bg-err-bg text-err border border-err/25">已禁用</span>}
+                {u.role === "ADMIN" && <span className="ml-2 text-[11px] px-1.5 py-0.5 rounded bg-surface-2 text-ink-2 border border-line">管理员</span>}
               </span>
-              <div className="text-[11px] text-gray-400">@{u.username} · 注册于 {u.createdAt.toLocaleDateString("zh-CN")}</div>
+              <div className="text-[11px] text-ink-3">@{u.username} · 注册于 {u.createdAt.toLocaleDateString("zh-CN")}</div>
             </div>
             <UserOps
               userId={u.id}
@@ -232,7 +232,7 @@ async function Users({ page, currentUserId }: { page: number; currentUserId: str
               key={n}
               href={`/admin?tab=users&page=${n}`}
               className={`px-3 py-1 rounded-md border ${
-                n === page ? "bg-blue-600 border-blue-600 text-white" : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                n === page ? "bg-ink border-ink text-white" : "border-line text-ink-2 hover:bg-surface-2"
               }`}
             >
               {n}
@@ -249,7 +249,7 @@ async function Settings() {
   const values: Record<string, string> = {};
   for (const r of rows) values[r.key] = r.value;
   return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-6 max-w-xl">
+    <section className="card p-6 max-w-xl">
       <SettingsForm values={values} />
     </section>
   );

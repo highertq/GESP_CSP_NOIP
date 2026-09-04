@@ -12,40 +12,46 @@ export type PaperCardData = {
   _count?: { questions?: number };
 };
 
-const CAT_BADGE: Record<string, string> = {
-  GESP: "bg-emerald-100 text-emerald-700",
-  "CSP-J": "bg-blue-100 text-blue-700",
-  "CSP-S": "bg-indigo-100 text-indigo-700",
-  "NCT-C++": "bg-amber-100 text-amber-700",
-  "NCT-KITTEN": "bg-pink-100 text-pink-700",
-  OTHER: "bg-gray-100 text-gray-600",
-};
-
 export default function PaperCard({ paper }: { paper: PaperCardData }) {
   const qCount = paper._count?.questions ?? 0;
   return (
     <Link
       href={`/paper/${paper.slug}`}
-      className="block bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-sm transition-shadow"
+      className="card card-hover p-4 sm:p-5 flex flex-col gap-3 group"
     >
-      <div className="flex items-center gap-2 mb-2">
-        <span
-          className={`text-[11px] px-2 py-0.5 rounded-md font-medium ${CAT_BADGE[paper.category] ?? CAT_BADGE.OTHER}`}
-        >
+      <div className="flex items-center justify-between gap-2">
+        <span className="pill-code">
           {categoryLabel(paper.category)}
-          {paper.level ? ` ${paper.level}级` : ""}
+          {paper.level ? ` · L${paper.level}` : ""}
         </span>
         {paper.examDate && (
-          <span className="text-xs text-gray-400">{paper.examDate}</span>
+          <span className="code text-[10.5px] text-ink-4 tracking-tight">{paper.examDate}</span>
         )}
       </div>
-      <h3 className="font-medium text-gray-900 text-sm leading-snug line-clamp-2 min-h-[2.5rem]">
+      <h3 className="text-[14.5px] font-semibold text-ink leading-snug line-clamp-2 flex-1">
         {paper.title}
       </h3>
-      <div className="mt-2 flex items-center gap-3 text-xs text-gray-400">
-        <span>{qCount} 题</span>
-        <span>{paper.timeLimit} 分钟</span>
-        <span>{paper.totalScore} 分</span>
+      <div className="flex items-center justify-between gap-2">
+        <p className="code text-[11.5px] text-ink-3 truncate">
+          <span className="num text-ink-2">{qCount}</span> 题 ·{" "}
+          <span className="num text-ink-2">{paper.timeLimit}</span> 分钟 ·{" "}
+          <span className="num text-ink-2">{paper.totalScore}</span> 分
+        </p>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-ink-3 shrink-0 -translate-x-1 opacity-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0 group-hover:opacity-100"
+          aria-hidden="true"
+        >
+          <path d="M5 12h14" />
+          <path d="m12 5 7 7-7 7" />
+        </svg>
       </div>
     </Link>
   );

@@ -5,8 +5,49 @@ import PaperCard from "@/components/paper-card";
 
 export const revalidate = 60; // 首页 ISR：公告等设置变更 60s 内生效
 
+const CAT_DESC: Record<string, string> = {
+  GESP: "1-8 级历年真题全覆盖",
+  "CSP-J": "入门组初赛历年真题",
+  "CSP-S": "提高组初赛历年真题",
+  "NCT-C++": "C++ 编程等级考试真题",
+  "NCT-KITTEN": "Kitten 图形化编程真题",
+  OTHER: "其他赛事真题精选",
+};
+
+function SectionHead({
+  eyebrow,
+  title,
+  right,
+}: {
+  eyebrow: string;
+  title: string;
+  right?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-end justify-between gap-4 mb-5">
+      <div>
+        <p className="eyebrow mb-1.5">
+          <span className="text-ink/30">// </span>
+          {eyebrow}
+        </p>
+        <h2 className="text-xl sm:text-[22px] font-bold tracking-tight text-ink">{title}</h2>
+      </div>
+      {right}
+    </div>
+  );
+}
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="min-w-0">
+      <div className="num text-[26px] sm:text-3xl font-semibold text-ink leading-none">{value}</div>
+      <div className="mt-1.5 text-xs text-ink-3 truncate">{label}</div>
+    </div>
+  );
+}
+
 export default async function HomePage() {
-  const [cats, latest, announcement] = await Promise.all([
+  const [cats, latest, announcement, objectiveCount] = await Promise.all([
     prisma.paper.groupBy({
       by: ["category"],
       where: { published: true },
@@ -19,13 +60,14 @@ export default async function HomePage() {
       include: { _count: { select: { questions: true } } },
     }),
     prisma.adminSetting.findUnique({ where: { key: "announcement" } }),
+    prisma.question.count({ where: { paper: { published: true } } }),
   ]);
 
   const countBy = new Map(cats.map((c) => [c.category, c._count._all]));
   const totalPapers = [...countBy.values()].reduce((a, b) => a + b, 0);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-14">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -39,27 +81,111 @@ export default async function HomePage() {
           }),
         }}
       />
-      <section className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-10 text-center">
-        <h1 className="text-2xl sm:text-3xl font-bold">信奥初赛真题，免费开刷</h1>
-        <p className="mt-2 text-blue-100 text-sm sm:text-base">
-          覆盖 GESP / CSP-J / CSP-S / NCT 共 {totalPapers} 套真题 · 客观题即时判分 · 错题自动沉淀
-        </p>
-        <Link
-          href="/papers"
-          className="inline-block mt-5 rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50"
-        >
-          开始刷题
-        </Link>
+
+      {/* ============ Hero ============ */}
+      <section className="relative overflow-hidden -mx-4 sm:-mx-6 px-4 sm:px-6">
+        <div className="hero-grid absolute inset-0 pointer-events-none" aria-hidden="true" />
+        <div className="relative pt-10 sm:pt-14 pb-12 sm:pb-16 grid lg:grid-cols-[1.12fr_0.88fr] gap-10 lg:gap-14 items-center">
+          <div className="fade-up">
+            <p className="code text-xs tracking-[0.06em] text-ink-3 mb-6">
+              <span className="text-ink-4">// </span>
+              信息学奥赛初赛 · 客观题在线练习
+            </p>
+            <h1 className="text-[2.7rem] leading-[1.06] sm:text-[3.6rem] font-extrabold tracking-[-0.035em] text-ink">
+              信奥初赛真题
+              <br />
+              <span className="relative inline-block">
+                <span
+                  className="absolute inset-x-[-0.05em] bottom-[0.08em] h-[0.34em] rounded-[3px] bg-[#e6e6e1]"
+                  aria-hidden="true"
+                />
+                <span className="relative">免费开刷</span>
+              </span>
+            </h1>
+            <p className="mt-6 max-w-md text-[15px] leading-relaxed text-ink-2">
+              覆盖 GESP / CSP-J / CSP-S / NCT 历年初赛真题，提交即时判分，答错自动沉淀错题本。整卷模拟、错题重练、收藏标记——一站备考。
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link href="/papers" className="btn btn-primary btn-lg">
+                开始刷题
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </Link>
+              <Link href="/papers?cat=GESP" className="btn btn-outline btn-lg">
+                GESP 分级练习
+              </Link>
+            </div>
+            <p className="code mt-6 text-[11.5px] text-ink-4">
+              $ 游客可直接体验 · 注册登录后记录 / 错题 / 收藏全同步
+            </p>
+          </div>
+
+          {/* 数据面板 */}
+          <div
+            className="fade-up hidden sm:block"
+            style={{ animationDelay: "0.12s" }}
+          >
+            <div className="card p-6 sm:p-7 shadow-[0_1px_2px_rgba(24,24,21,0.03),0_20px_50px_-24px_rgba(24,24,21,0.18)]">
+              <div className="flex items-center justify-between mb-6">
+                <p className="eyebrow">数据一览</p>
+                <span className="code text-[11px] text-ink-4">db.stats()</span>
+              </div>
+              <div className="grid grid-cols-3 gap-6">
+                <Stat value={String(totalPapers)} label="套真题" />
+                <Stat value={objectiveCount.toLocaleString("en-US")} label="道客观题" />
+                <Stat value="100%" label="免费在线" />
+              </div>
+              <div className="mt-6 pt-5 border-t border-line space-y-2.5">
+                {[
+                  "gesp · 1–8 级 全收录",
+                  "csp-j / csp-s · 历年真题",
+                  "nct · 少儿编程考级",
+                ].map((t) => (
+                  <div key={t} className="flex items-center gap-2.5 text-[12.5px] text-ink-2">
+                    <span className="code text-ink-4">✓</span>
+                    <span className="code tracking-tight">{t}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
+      {/* 公告 */}
       {announcement?.value ? (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          📢 {announcement.value}
+        <div className="card px-4 sm:px-5 py-3.5 flex items-start gap-3 -mt-6">
+          <span className="pill-code shrink-0 mt-0.5">公告</span>
+          <p className="text-sm leading-relaxed text-ink-2">{announcement.value}</p>
         </div>
       ) : null}
 
+      {/* ============ 考试分类 ============ */}
       <section>
-        <h2 className="text-lg font-bold mb-3">按考试分类</h2>
+        <SectionHead
+          eyebrow="exams"
+          title="按考试分类"
+          right={
+            <Link
+              href="/papers"
+              className="text-[13px] font-medium text-ink-2 hover:text-ink transition-colors shrink-0"
+            >
+              查看全部 →
+            </Link>
+          }
+        />
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {CATEGORY_META.map((c) => {
             const n = countBy.get(c.value) ?? 0;
@@ -68,13 +194,17 @@ export default async function HomePage() {
               <Link
                 key={c.value}
                 href={`/papers?cat=${c.value}`}
-                className="bg-white border border-gray-200 rounded-xl px-4 py-4 hover:border-blue-300 transition-colors"
+                className="card card-hover group p-4.5 sm:p-5 flex flex-col gap-3"
               >
-                <div className="font-medium text-gray-900">{c.label}</div>
-                <div className="text-xs text-gray-400 mt-1">
-                  {c.value === "GESP" ? "1-8 级真题" : c.value.startsWith("CSP") ? "历年初赛真题" : "模拟与真题"}
-                  {" · "}
-                  {n} 套
+                <div className="flex items-center justify-between gap-2">
+                  <span className="code text-[11px] font-medium text-ink-3 group-hover:text-ink transition-colors">
+                    {c.value}
+                  </span>
+                  <span className="num text-[13px] text-ink-3">{n} 套</span>
+                </div>
+                <div>
+                  <div className="text-[15px] font-semibold text-ink">{c.label}</div>
+                  <div className="mt-0.5 text-xs text-ink-3 truncate">{CAT_DESC[c.value]}</div>
                 </div>
               </Link>
             );
@@ -82,36 +212,54 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ============ 最新收录 ============ */}
       <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold">最新收录</h2>
-          <Link href="/papers" className="text-sm text-blue-600">
-            查看全部 →
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <SectionHead
+          eyebrow="latest"
+          title="最新收录"
+          right={
+            <Link
+              href="/papers"
+              className="text-[13px] font-medium text-ink-2 hover:text-ink transition-colors shrink-0"
+            >
+              全部试卷 →
+            </Link>
+          }
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {latest.map((p) => (
             <PaperCard key={p.slug} paper={p} />
           ))}
         </div>
       </section>
 
-      <section className="rounded-xl bg-white border border-gray-200 px-5 py-6 text-sm text-gray-600 space-y-2 leading-relaxed">
-        <h2 className="text-base font-bold text-gray-900">常见问题</h2>
-        <p>
-          <b>这里能刷什么题？</b>
-          信奥初赛的客观题（单选 / 多选 / 判断 / 填空），覆盖 GESP 1-8 级历年真题、CSP-J/S
-          初赛试题等。提交后即时判分，答错的题会自动进你的错题本。
-        </p>
-        <p>
-          <b>编程大题怎么练？</b>
-          客观题适合网站在线判分；编程大题（GESP 编程题、CSP 上机）请前往洛谷、GESP
-          官方 OJ 等在线评测平台提交，本站提供题面与说明。
-        </p>
-        <p>
-          <b>需要登录吗？</b>
-          游客可以直接刷题体验；注册登录后，答题记录、错题本、收藏才会保存并同步。
-        </p>
+      {/* ============ FAQ ============ */}
+      <section className="max-w-3xl">
+        <SectionHead eyebrow="faq" title="常见问题" />
+        <div className="divide-y divide-line">
+          {[
+            {
+              q: "这里能刷什么题？",
+              a: "信奥初赛的客观题（单选 / 多选 / 判断 / 填空），覆盖 GESP 1-8 级历年真题、CSP-J/S 初赛试题等。提交后即时判分，答错的题会自动进你的错题本。",
+            },
+            {
+              q: "编程大题怎么练？",
+              a: "客观题适合网站在线判分；编程大题（GESP 编程题、CSP 上机）请前往洛谷、GESP 官方 OJ 等在线评测平台提交，本站提供题面与说明。",
+            },
+            {
+              q: "需要登录吗？",
+              a: "游客可以直接刷题体验；注册登录后，答题记录、错题本、收藏才会保存并同步。",
+            },
+          ].map((f, i) => (
+            <div key={f.q} className="py-4 grid grid-cols-[2.5rem_1fr] gap-3">
+              <span className="code text-xs text-ink-4 pt-1">Q{i + 1}</span>
+              <div>
+                <p className="text-[15px] font-semibold text-ink">{f.q}</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-ink-2">{f.a}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   );

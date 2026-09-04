@@ -44,22 +44,26 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
     }
   }
 
-  const input =
-    "w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
-
   return (
-    <div className="max-w-sm mx-auto mt-10">
-      <h1 className="text-xl font-bold text-center mb-1">
-        {isLogin ? "登录" : "注册"}
-      </h1>
-      <p className="text-center text-sm text-gray-500 mb-6">
-        {isLogin ? "登录后保存你的刷题记录与错题本" : "注册即送错题本 + 整卷模拟"}
-      </p>
-      <form onSubmit={submit} className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
+    <div className="max-w-sm mx-auto pt-6 sm:pt-10">
+      <div className="text-center mb-7">
+        <p className="eyebrow mb-2">
+          <span className="text-ink/30">// </span>
+          {isLogin ? "welcome back" : "create account"}
+        </p>
+        <h1 className="text-2xl font-bold tracking-tight text-ink">
+          {isLogin ? "登录" : "注册"}
+        </h1>
+        <p className="mt-1.5 text-sm text-ink-3">
+          {isLogin ? "登录后保存你的刷题记录与错题本" : "注册即送错题本 + 整卷模拟"}
+        </p>
+      </div>
+
+      <form onSubmit={submit} className="card p-6 sm:p-7 space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1.5">用户名</label>
+          <label className="block text-[13px] font-medium text-ink-2 mb-1.5">用户名</label>
           <input
-            className={input}
+            className="input"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="字母/数字/下划线，3-20 位"
@@ -69,9 +73,11 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
         </div>
         {!isLogin && (
           <div>
-            <label className="block text-sm font-medium mb-1.5">昵称（可选）</label>
+            <label className="block text-[13px] font-medium text-ink-2 mb-1.5">
+              昵称 <span className="text-ink-4">（可选）</span>
+            </label>
             <input
-              className={input}
+              className="input"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               placeholder="展示用昵称，默认同用户名"
@@ -79,9 +85,9 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
           </div>
         )}
         <div>
-          <label className="block text-sm font-medium mb-1.5">密码</label>
+          <label className="block text-[13px] font-medium text-ink-2 mb-1.5">密码</label>
           <input
-            className={input}
+            className="input"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -90,22 +96,19 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
             required
           />
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={busy}
-          className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-        >
-          {busy ? "请稍候…" : isLogin ? "登 录" : "注 册"}
+        {error && <p className="text-[13px] text-err">{error}</p>}
+        <button type="submit" disabled={busy} className="btn btn-primary w-full">
+          {busy ? "处理中…" : isLogin ? "登 录" : "注 册"}
         </button>
       </form>
-      <p className="text-center text-sm text-gray-500 mt-4">
+
+      <p className="text-center text-[13px] text-ink-3 mt-5">
         {isLogin ? (
           <>
             还没有账号？{" "}
             <Link
               href={next ? `/auth/register?next=${encodeURIComponent(next)}` : "/auth/register"}
-              className="text-blue-600"
+              className="font-medium text-ink underline underline-offset-4 decoration-line-strong hover:decoration-ink transition-colors"
             >
               去注册
             </Link>
@@ -115,7 +118,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
             已有账号？{" "}
             <Link
               href={next ? `/auth/login?next=${encodeURIComponent(next)}` : "/auth/login"}
-              className="text-blue-600"
+              className="font-medium text-ink underline underline-offset-4 decoration-line-strong hover:decoration-ink transition-colors"
             >
               去登录
             </Link>

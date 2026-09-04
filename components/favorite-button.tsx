@@ -48,8 +48,8 @@ export default function FavoriteButton({
       title={fav ? "取消收藏" : "收藏本题"}
       className={`${base} transition-colors ${
         fav
-          ? "border-amber-300 bg-amber-50 text-amber-500"
-          : "border-gray-200 text-gray-400 hover:text-amber-500 hover:border-amber-300"
+          ? "border-line-strong bg-surface-2 text-ink"
+          : "border-line text-ink-3 hover:text-ink hover:border-line-strong"
       }`}
     >
       {fav ? "★ 已收藏" : "☆ 收藏"}

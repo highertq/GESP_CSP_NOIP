@@ -133,11 +133,16 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
   const btnState = (item: ExamItem): { cls: string; label: string } => {
     const answered = (answers[item.id] ?? "").trim() !== "";
     const flag = flagged[item.id];
-    if (item.type === "PROGRAM") return { cls: "bg-gray-50 text-gray-300 border-gray-100", label: "P" };
+    if (item.type === "PROGRAM")
+      return { cls: "bg-surface-2 text-ink-4 border-line", label: "P" };
     let cls = answered
-      ? "bg-blue-600 text-white border-blue-600"
-      : "bg-white text-gray-600 border-gray-200 hover:border-blue-300";
-    if (flag) cls = answered ? "bg-amber-400 text-white border-amber-400" : "bg-amber-50 text-amber-600 border-amber-300";
+      ? "bg-ink text-white border-ink"
+      : "bg-surface text-ink-4 border-line hover:border-ink/60 hover:text-ink";
+    // 标记 = 黑边粗框：未答白底黑字；已答黑底 + 内侧白圈
+    if (flag)
+      cls = answered
+        ? "bg-ink text-white border-ink shadow-[inset_0_0_0_1.5px_#fff]"
+        : "bg-surface text-ink border-ink";
     return { cls, label: String(item.seq) };
   };
 
@@ -146,18 +151,18 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
       {/* 题目主区 */}
       <div className="flex-1 min-w-0 space-y-4 pb-10">
         {/* 顶栏 */}
-        <div className="sticky top-0 z-20 -mx-1 px-1 py-2 bg-white/95 backdrop-blur border-b border-gray-100">
+        <div className="sticky top-0 z-20 -mx-1 px-1 py-2 bg-surface/95 backdrop-blur border-b border-line">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="font-bold text-gray-900 truncate">{bundle.title}</h1>
-              <p className="text-xs text-gray-400">
+              <h1 className="font-bold text-ink truncate">{bundle.title}</h1>
+              <p className="text-xs text-ink-3">
                 已答 {answeredCount}/{objectiveItems.length} · 未答 {objectiveItems.length - answeredCount}
               </p>
             </div>
             <div className="flex items-center gap-3 shrink-0">
               <span
                 className={`font-mono text-lg font-bold tabular-nums ${
-                  remainingMs < 5 * 60_000 ? "text-red-500 animate-pulse" : "text-gray-800"
+                  remainingMs < 5 * 60_000 ? "text-err animate-pulse" : "text-ink"
                 }`}
               >
                 {timeText}
@@ -165,7 +170,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
               <button
                 onClick={() => setConfirmOpen(true)}
                 disabled={submitting}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+                className="btn btn-primary"
               >
                 {submitting ? "判分中…" : "交卷"}
               </button>
@@ -174,7 +179,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
         </div>
 
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+          <div className="rounded-xl border border-err/25 bg-err-bg px-4 py-3 text-sm text-err">{error}</div>
         )}
 
         {/* 题流 */}
@@ -183,29 +188,29 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
           return (
             <div key={item.id} ref={(el) => { itemRefs.current[idx] = el; }}>
               {isSectionStart && item.section && (
-                <div className="pt-2 pb-1 text-sm font-bold text-blue-700">{item.section}</div>
+                <div className="pt-2 pb-1 text-sm font-bold text-ink">{item.section}</div>
               )}
-              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="card p-5">
                 <div className="flex items-start gap-2">
-                  <span className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-sm font-semibold text-gray-600">
+                  <span className="num shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-surface-2 text-sm font-semibold text-ink-2">
                     {item.seq}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1.5">
                       <TypeBadge type={item.type} />
-                      <span className="text-xs text-gray-300">{item.score} 分</span>
+                      <span className="text-xs text-ink-4">{item.score} 分</span>
                       {item.answersMissing && (
-                        <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-200">
+                        <span className="text-[11px] px-1.5 py-0.5 rounded border border-line bg-surface-2 text-ink-3">
                           此题官方暂无答案，交卷不计分
                         </span>
                       )}
                       {item.type !== "PROGRAM" && (
                         <button
                           onClick={() => setFlagged((f) => ({ ...f, [item.id]: !f[item.id] }))}
-                          className={`ml-auto text-xs px-2 py-1 rounded-md border ${
+                          className={`ml-auto text-xs px-2 py-1 rounded-md border transition-colors ${
                             flagged[item.id]
-                              ? "border-amber-300 bg-amber-50 text-amber-600"
-                              : "border-gray-200 text-gray-400 hover:text-amber-500"
+                              ? "border-ink bg-surface-2 text-ink"
+                              : "border-line text-ink-3 hover:border-ink/60 hover:text-ink"
                           }`}
                         >
                           {flagged[item.id] ? "已标记" : "标记"}
@@ -214,8 +219,8 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
                     </div>
 
                     {item.codeHtml && (
-                      <details open className="mb-3 rounded-lg border border-gray-200 bg-gray-50">
-                        <summary className="cursor-pointer select-none px-3 py-1.5 text-xs font-medium text-gray-500">
+                      <details open className="mb-3 rounded-lg border border-line bg-surface-2">
+                        <summary className="cursor-pointer select-none px-3 py-1.5 text-xs font-medium text-ink-2">
                           阅读程序代码（点击折叠）
                         </summary>
                         <div
@@ -233,12 +238,12 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
                         value={answers[item.id] ?? ""}
                         onChange={(e) => setAnswers((a) => ({ ...a, [item.id]: e.target.value }))}
                         placeholder="输入答案后回车也可跳下一题…"
-                        className="mt-3 w-full max-w-sm rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        className="input mt-3 max-w-sm"
                       />
                     )}
                     {item.type === "PROGRAM" && (
-                      <div className="mt-3 rounded-lg bg-rose-50 border border-rose-100 px-4 py-2.5 text-xs text-rose-600">
-                        编程大题不参与判分：请复制题面到洛谷 / GESP OJ 等平台提交验证
+                      <div className="mt-3 rounded-lg bg-surface-2 border border-line px-4 py-2.5 text-xs text-ink-2">
+                        本题为编程题，请前往洛谷等在线评测平台提交（本站不做判分）。
                       </div>
                     )}
                   </div>
@@ -251,7 +256,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
           <button
             onClick={() => setConfirmOpen(true)}
             disabled={submitting}
-            className="rounded-lg bg-blue-600 px-10 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            className="btn btn-primary px-12 py-3"
           >
             {submitting ? "判分中…" : "提交试卷"}
           </button>
@@ -261,7 +266,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
       {/* 答题卡 */}
       <aside className="hidden lg:block w-44 shrink-0">
         <div className="sticky top-24 space-y-4">
-          <div className="rounded-2xl border border-gray-200 bg-white p-4">
+          <div className="card p-4">
             <div className="text-sm font-bold mb-3">答题卡</div>
             <div className="grid grid-cols-5 gap-1.5">
               {items.map((item, idx) => {
@@ -278,19 +283,19 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
                 );
               })}
             </div>
-            <div className="mt-3 flex items-center gap-3 text-[11px] text-gray-400">
+            <div className="mt-3 flex items-center gap-3 text-[11px] text-ink-3">
               <span className="flex items-center gap-1">
-                <i className="inline-block w-3 h-3 rounded bg-blue-600" /> 已答
+                <i className="inline-block w-3 h-3 rounded bg-ink" /> 已答
               </span>
               <span className="flex items-center gap-1">
-                <i className="inline-block w-3 h-3 rounded border border-gray-300 bg-white" /> 未答
+                <i className="inline-block w-3 h-3 rounded border border-line-strong bg-surface" /> 未答
               </span>
               <span className="flex items-center gap-1">
-                <i className="inline-block w-3 h-3 rounded bg-amber-400" /> 标记
+                <i className="inline-block w-3 h-3 rounded border border-ink bg-surface" /> 标记
               </span>
             </div>
           </div>
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
+          <div className="rounded-2xl border border-line bg-surface-2 p-3 text-xs text-ink-2">
             答题进度自动保存在本机，意外关闭页面后可继续作答；提交后清除。
           </div>
         </div>
@@ -299,28 +304,28 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
       {/* 交卷确认 */}
       {confirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !submitting && setConfirmOpen(false)}>
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold">确认交卷？</h3>
-            <p className="mt-2 text-sm text-gray-500">
-              已答 <b className="text-gray-900">{answeredCount}</b> / {objectiveItems.length} 题，
+          <div className="w-full max-w-sm rounded-2xl bg-surface p-6 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.3)]" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold tracking-tight">确认交卷？</h3>
+            <p className="mt-2 text-sm text-ink-2">
+              已答 <b className="num text-ink">{answeredCount}</b> / {objectiveItems.length} 题，
               {objectiveItems.length - answeredCount > 0 && (
-                <>还有 <b className="text-red-500">{objectiveItems.length - answeredCount}</b> 题未作答。</>
+                <>还有 <b className="text-err">{objectiveItems.length - answeredCount}</b> 题未作答。</>
               )}
               交卷后立即判分，成绩将保存到你的账号。
             </p>
-            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+            {error && <p className="mt-2 text-sm text-err">{error}</p>}
             <div className="mt-5 flex gap-3">
               <button
                 onClick={() => setConfirmOpen(false)}
                 disabled={submitting}
-                className="flex-1 rounded-lg border border-gray-200 py-2.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-60"
+                className="btn btn-outline flex-1"
               >
                 继续答题
               </button>
               <button
                 onClick={() => submit(false)}
                 disabled={submitting}
-                className="flex-1 rounded-lg bg-blue-600 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+                className="btn btn-primary flex-1"
               >
                 {submitting ? "判分中…" : "确认交卷"}
               </button>
@@ -333,15 +338,16 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
 }
 
 function TypeBadge({ type }: { type: ExamItem["type"] }) {
-  const map: Record<ExamItem["type"], [string, string]> = {
-    CHOICE: ["单选题", "bg-blue-50 text-blue-700 border-blue-100"],
-    MULTI_CHOICE: ["多选题", "bg-violet-50 text-violet-700 border-violet-100"],
-    JUDGE: ["判断题", "bg-amber-50 text-amber-700 border-amber-100"],
-    FILL: ["填空题", "bg-emerald-50 text-emerald-700 border-emerald-100"],
-    PROGRAM: ["编程题", "bg-rose-50 text-rose-700 border-rose-100"],
+  const map: Record<ExamItem["type"], string> = {
+    CHOICE: "单选题",
+    MULTI_CHOICE: "多选题",
+    JUDGE: "判断题",
+    FILL: "填空题",
+    PROGRAM: "编程题",
   };
-  const [label, cls] = map[type];
-  return <span className={`text-[11px] px-1.5 py-0.5 rounded border ${cls}`}>{label}</span>;
+  return (
+    <span className="pill-code">{map[type] ?? "未知"}</span>
+  );
 }
 
 function QuestionOptions({
@@ -369,8 +375,8 @@ function QuestionOptions({
             onClick={() => setAnswers((a) => ({ ...a, [item.id]: value === v ? "" : v }))}
             className={`px-5 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
               value === v
-                ? "border-blue-600 bg-blue-600 text-white"
-                : "border-gray-200 bg-white text-gray-600 hover:border-blue-300"
+                ? "border-ink bg-ink text-white"
+                : "border-line bg-surface text-ink-2 hover:border-line-strong"
             }`}
           >
             {v === "True" ? "对" : "错"}
@@ -404,12 +410,12 @@ function QuestionOptions({
             key={o.key}
             onClick={() => toggle(o.key)}
             className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2 transition-colors ${
-              sel ? "border-blue-400 bg-blue-50" : "border-gray-100 hover:border-blue-200"
+              sel ? "border-ink/30 bg-surface-2" : "border-line hover:border-line-strong"
             }`}
           >
             <span
-              className={`shrink-0 w-5 h-5 flex items-center justify-center rounded-full border text-[11px] font-bold ${
-                sel ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 text-gray-400"
+              className={`num shrink-0 w-5 h-5 flex items-center justify-center rounded-full border text-[11px] font-bold ${
+                sel ? "border-ink bg-ink text-white" : "border-line-strong text-ink-3"
               }`}
             >
               {isMulti && sel ? "✓" : o.key}

@@ -76,8 +76,8 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
 
   return (
     <div className="space-y-5">
-      <nav className="text-xs text-gray-400">
-        <Link href={`/paper/${attempt.paper.slug}`} className="hover:text-blue-600">
+      <nav className="text-xs text-ink-3">
+        <Link href={`/paper/${attempt.paper.slug}`} className="hover:text-ink">
           {attempt.paper.title}
         </Link>
         <span className="mx-1.5">/</span>
@@ -85,14 +85,14 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
       </nav>
 
       {/* 成绩头卡 */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-6">
+      <section className="card p-6">
         <div className="flex flex-wrap items-center gap-6">
           <div className="text-center">
-            <div className={`text-4xl font-black ${percent >= 60 ? "text-blue-600" : "text-red-500"}`}>
+            <div className={`text-4xl font-black ${percent >= 60 ? "text-ink" : "text-err"}`}>
               {percent}
               <span className="text-xl">分</span>
             </div>
-            <div className="mt-1 text-xs text-gray-400">得分率（{correctScore}/{maxScore} 分）</div>
+            <div className="mt-1 text-xs text-ink-3">得分率（{correctScore}/{maxScore} 分）</div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-1">
             {[
@@ -102,25 +102,25 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
               ["提交时间", attempt.submittedAt ? attempt.submittedAt.toLocaleString("zh-CN", { hour12: false }) : "—"],
             ].map(([k, v]) => (
               <div key={k}>
-                <div className="text-xs text-gray-400">{k}</div>
-                <div className="mt-0.5 text-base font-semibold text-gray-800">{v}</div>
+                <div className="text-xs text-ink-3">{k}</div>
+                <div className="mt-0.5 text-base font-semibold text-ink">{v}</div>
               </div>
             ))}
           </div>
           <div className="flex flex-col gap-2">
             <Link
               href={`/paper/${attempt.paper.slug}/do`}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-blue-700"
+              className="btn btn-primary"
             >
               再练一遍
             </Link>
-            <Link href="/me" className="rounded-lg border border-gray-200 px-4 py-2 text-center text-sm text-gray-600 hover:bg-gray-50">
+            <Link href="/me" className="btn btn-outline">
               我的统计
             </Link>
           </div>
         </div>
         {attempt.answers.some((a) => a.correct === false) && (
-          <p className="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-2.5 text-xs text-amber-700">
+          <p className="mt-4 rounded-lg border border-line bg-surface-2 px-4 py-2.5 text-xs text-ink-2">
             答错的题目已自动收入你的错题本，可在「错题本」中针对性重练。
           </p>
         )}
@@ -145,20 +145,20 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
           return (
             <div key={item.id} className={isSectionStart ? "mt-2" : ""}>
               {isSectionStart && item.section && (
-                <div className="pt-2 pb-1 text-sm font-bold text-blue-700">{item.section}</div>
+                <div className="pt-2 pb-1 text-sm font-bold text-ink">{item.section}</div>
               )}
-              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="card p-5">
                 <div className="flex items-start gap-2">
-                  <span className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-sm font-semibold text-gray-600">
+                  <span className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-surface-2 text-sm font-semibold text-ink-2">
                     {item.seq}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1.5">
                       <TypeBadge type={item.type} />
-                      <span className="text-xs text-gray-300">{item.score} 分</span>
+                      <span className="text-xs text-ink-4">{item.score} 分</span>
                       <StateBadge state={state} />
                       {q?.answersMissing && (
-                        <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-200">
+                        <span className="text-[11px] px-1.5 py-0.5 rounded border border-line bg-surface-2 text-ink-3">
                           官方暂无答案，未计分
                         </span>
                       )}
@@ -170,8 +170,8 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
                     </div>
 
                     {item.codeHtml && (
-                      <details open={state !== "right"} className="mb-3 rounded-lg border border-gray-200 bg-gray-50">
-                        <summary className="cursor-pointer select-none px-3 py-1.5 text-xs font-medium text-gray-500">
+                      <details open={state !== "right"} className="mb-3 rounded-lg border border-line bg-surface-2">
+                        <summary className="cursor-pointer select-none px-3 py-1.5 text-xs font-medium text-ink-2">
                           阅读程序代码
                         </summary>
                         <div
@@ -184,7 +184,7 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
                     <div className="md-body" dangerouslySetInnerHTML={{ __html: item.html }} />
 
                     {item.type === "PROGRAM" ? (
-                      <div className="mt-3 rounded-lg bg-rose-50 border border-rose-100 px-4 py-2.5 text-xs text-rose-600">
+                      <div className="mt-3 rounded-lg border border-line bg-surface-2 px-4 py-2.5 text-xs text-ink-2">
                         编程大题不在线判分：请复制题面到洛谷 / GESP OJ 等平台提交验证。
                       </div>
                     ) : (
@@ -200,29 +200,29 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
                                   key={o.key}
                                   className={`flex items-start gap-2.5 rounded-lg border px-3 py-2 ${
                                     isAnswer
-                                      ? "border-green-300 bg-green-50"
+                                      ? "border-ok/35 bg-ok-bg"
                                       : iChose && state === "wrong"
-                                        ? "border-red-300 bg-red-50"
-                                        : "border-gray-100"
+                                        ? "border-err/30 bg-err-bg"
+                                        : "border-line"
                                   }`}
                                 >
                                   <span
                                     className={`shrink-0 w-5 h-5 flex items-center justify-center rounded-full border text-[11px] font-bold ${
                                       isAnswer
-                                        ? "border-green-600 bg-green-600 text-white"
+                                        ? "border-ok bg-ok text-white"
                                         : iChose && state === "wrong"
-                                          ? "border-red-500 bg-red-500 text-white"
-                                          : "border-gray-300 text-gray-400"
+                                          ? "border-err bg-err text-white"
+                                          : "border-line-strong text-ink-3"
                                     }`}
                                   >
                                     {o.key}
                                   </span>
                                   <div className="flex-1 min-w-0 md-body" dangerouslySetInnerHTML={{ __html: o.html }} />
                                   {isAnswer && (
-                                    <span className="shrink-0 self-center text-[11px] font-bold text-green-600">正确答案</span>
+                                    <span className="shrink-0 self-center text-[11px] font-bold text-ok">正确答案</span>
                                   )}
                                   {iChose && !isAnswer && state === "wrong" && (
-                                    <span className="shrink-0 self-center text-[11px] font-bold text-red-500">你的选择</span>
+                                    <span className="shrink-0 self-center text-[11px] font-bold text-err">你的选择</span>
                                   )}
                                 </div>
                               );
@@ -233,12 +233,12 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
                         <div
                           className={`mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg px-3 py-2 text-sm ${
                             state === "right"
-                              ? "bg-green-50 text-green-700"
+                              ? "bg-ok-bg text-ok"
                               : state === "wrong"
-                                ? "bg-red-50 text-red-700"
+                                ? "bg-err-bg text-err"
                                 : state === "empty"
-                                  ? "bg-gray-50 text-gray-500"
-                                  : "bg-gray-50 text-gray-500"
+                                  ? "bg-surface-2 text-ink-3"
+                                  : "bg-surface-2 text-ink-3"
                           }`}
                         >
                           <span>
@@ -278,11 +278,11 @@ function formatGiven(type: ExamItem["type"], v: string): string {
 
 function TypeBadge({ type }: { type: ExamItem["type"] }) {
   const map: Record<ExamItem["type"], [string, string]> = {
-    CHOICE: ["单选题", "bg-blue-50 text-blue-700 border-blue-100"],
-    MULTI_CHOICE: ["多选题", "bg-violet-50 text-violet-700 border-violet-100"],
-    JUDGE: ["判断题", "bg-amber-50 text-amber-700 border-amber-100"],
-    FILL: ["填空题", "bg-emerald-50 text-emerald-700 border-emerald-100"],
-    PROGRAM: ["编程题", "bg-rose-50 text-rose-700 border-rose-100"],
+    CHOICE: ["单选题", "bg-surface-2 text-ink-2 border-line"],
+    MULTI_CHOICE: ["多选题", "bg-surface-2 text-ink-2 border-line"],
+    JUDGE: ["判断题", "bg-surface-2 text-ink-2 border-line"],
+    FILL: ["填空题", "bg-surface-2 text-ink-2 border-line"],
+    PROGRAM: ["编程题", "bg-surface-2 text-ink-2 border-line"],
   };
   const [label, cls] = map[type];
   return <span className={`text-[11px] px-1.5 py-0.5 rounded border ${cls}`}>{label}</span>;
@@ -290,10 +290,10 @@ function TypeBadge({ type }: { type: ExamItem["type"] }) {
 
 function StateBadge({ state }: { state: string }) {
   const map: Record<string, [string, string]> = {
-    right: ["答对", "bg-green-50 text-green-700 border-green-200"],
-    wrong: ["答错", "bg-red-50 text-red-600 border-red-200"],
-    empty: ["未作答", "bg-gray-100 text-gray-500 border-gray-200"],
-    skip: ["未计分", "bg-gray-100 text-gray-400 border-gray-200"],
+    right: ["答对", "bg-ok-bg text-ok border-ok/25"],
+    wrong: ["答错", "bg-err-bg text-err border-err/25"],
+    empty: ["未作答", "bg-surface-2 text-ink-2 border-line"],
+    skip: ["未计分", "bg-surface-2 text-ink-3 border-line"],
   };
   const [label, cls] = map[state] ?? map.skip;
   return <span className={`text-[11px] px-1.5 py-0.5 rounded border ${cls}`}>{label}</span>;

@@ -29,8 +29,8 @@ export default function PaperToggle({ paperId, published }: { paperId: string; p
       disabled={busy}
       className={`px-2.5 py-1 rounded-md text-xs font-medium border disabled:opacity-60 ${
         published
-          ? "border-green-200 text-green-600 hover:bg-green-50"
-          : "border-gray-300 text-gray-500 hover:bg-gray-100"
+          ? "border-ok/30 text-ok hover:bg-ok-bg"
+          : "border-line-strong text-ink-2 hover:bg-surface-2"
       }`}
     >
       {published ? "已上线 · 下线" : "已下线 · 上线"}

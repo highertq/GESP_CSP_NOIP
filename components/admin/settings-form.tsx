@@ -51,26 +51,26 @@ export default function SettingsForm({ values }: { values: Record<string, string
         <div key={f.key}>
           <label className="block text-sm font-medium mb-1.5">
             {f.label}
-            <span className="ml-2 text-xs text-gray-400 font-normal">{f.hint}</span>
+            <span className="ml-2 text-xs text-ink-3 font-normal">{f.hint}</span>
           </label>
           <div className="flex gap-2">
             <input
               type={f.type}
               value={form[f.key] ?? ""}
               onChange={(e) => setForm((s) => ({ ...s, [f.key]: e.target.value }))}
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="flex-1 rounded-lg border border-line-strong px-3 py-2 text-sm outline-none focus:border-ink focus:ring-2 focus:ring-ink/10"
             />
             <button
               onClick={() => save(f.key)}
               disabled={busy}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+              className="btn btn-primary"
             >
               保存
             </button>
           </div>
         </div>
       ))}
-      {msg && <p className="text-sm text-green-600">{msg}</p>}
+      {msg && <p className="text-sm text-ok">{msg}</p>}
     </div>
   );
 }

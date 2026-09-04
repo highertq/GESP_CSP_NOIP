@@ -75,18 +75,18 @@ export default async function MePage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-bold">
+        <div className="w-11 h-11 rounded-full bg-ink text-white flex items-center justify-center text-lg font-bold">
           {(user.nickname || user.username).slice(0, 1).toUpperCase()}
         </div>
         <div>
           <h1 className="text-lg font-bold">{user.nickname || user.username}</h1>
-          <p className="text-xs text-gray-400">@{user.username}</p>
+          <p className="text-xs text-ink-3">@{user.username}</p>
         </div>
         <div className="ml-auto flex gap-2 text-sm">
-          <Link href="/wrong" className="rounded-lg border border-gray-200 px-3 py-1.5 text-gray-600 hover:bg-gray-50">
-            错题本{wrongOpen > 0 && <span className="ml-1 text-amber-500 font-semibold">({wrongOpen})</span>}
+          <Link href="/wrong" className="btn btn-outline btn-sm">
+            错题本{wrongOpen > 0 && <span className="ml-1 text-ink font-semibold">({wrongOpen})</span>}
           </Link>
-          <Link href="/favorites" className="rounded-lg border border-gray-200 px-3 py-1.5 text-gray-600 hover:bg-gray-50">
+          <Link href="/favorites" className="btn btn-outline btn-sm">
             收藏
           </Link>
         </div>
@@ -94,19 +94,19 @@ export default async function MePage() {
 
       <section className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {stats.map(([k, v]) => (
-          <div key={k} className="rounded-xl border border-gray-200 bg-white p-4 text-center">
-            <div className="text-2xl font-bold text-gray-900">{v}</div>
-            <div className="mt-1 text-xs text-gray-400">{k}</div>
+          <div key={k} className="card p-4 text-center">
+            <div className="text-2xl font-bold text-ink">{v}</div>
+            <div className="mt-1 text-xs text-ink-3">{k}</div>
           </div>
         ))}
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* 分类分布 */}
-        <section className="rounded-2xl border border-gray-200 bg-white p-5">
+        <section className="card p-5">
           <h2 className="text-sm font-bold mb-4">分类分布</h2>
           {catRaw.length === 0 ? (
-            <p className="text-sm text-gray-400 py-6 text-center">还没有作答记录</p>
+            <p className="text-sm text-ink-3 py-6 text-center">还没有作答记录</p>
           ) : (
             <div className="space-y-3">
               {catRaw.map((c) => {
@@ -118,13 +118,13 @@ export default async function MePage() {
                 return (
                   <div key={c.category}>
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="text-gray-600">{label}</span>
-                      <span className="text-gray-400">
+                      <span className="text-ink-2">{label}</span>
+                      <span className="text-ink-3">
                         {corr}/{total} · {rate}%
                       </span>
                     </div>
-                    <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-                      <div className="h-full rounded-full bg-blue-500" style={{ width: `${rate}%` }} />
+                    <div className="h-2 rounded-full bg-surface-2 overflow-hidden">
+                      <div className="h-full rounded-full bg-ink" style={{ width: `${rate}%` }} />
                     </div>
                   </div>
                 );
@@ -134,23 +134,23 @@ export default async function MePage() {
         </section>
 
         {/* 近 30 天活跃 */}
-        <section className="rounded-2xl border border-gray-200 bg-white p-5">
+        <section className="card p-5">
           <h2 className="text-sm font-bold mb-4">近 30 天作答量</h2>
           {days.every((d) => d.cnt === 0) ? (
-            <p className="text-sm text-gray-400 py-6 text-center">最近 30 天没有作答，去刷一套题吧</p>
+            <p className="text-sm text-ink-3 py-6 text-center">最近 30 天没有作答，去刷一套题吧</p>
           ) : (
             <div className="flex items-end gap-[3px] h-28">
               {days.map((d) => (
                 <div key={d.key} className="flex-1 flex flex-col items-center gap-1" title={`${d.key}：${d.cnt} 题`}>
                   <div
-                    className={`w-full rounded-sm ${d.cnt > 0 ? "bg-blue-500" : "bg-gray-100"}`}
+                    className={`w-full rounded-sm ${d.cnt > 0 ? "bg-ink" : "bg-surface-2"}`}
                     style={{ height: `${Math.max(3, (d.cnt / maxCnt) * 80)}px` }}
                   />
                 </div>
               ))}
             </div>
           )}
-          <div className="mt-2 flex justify-between text-[10px] text-gray-300">
+          <div className="mt-2 flex justify-between text-[10px] text-ink-4">
             <span>{days[0]?.label}</span>
             <span>{days[14]?.label}</span>
             <span>{days[29]?.label}</span>
@@ -159,27 +159,27 @@ export default async function MePage() {
       </div>
 
       {/* 最近成绩 */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-5">
+      <section className="card p-5">
         <h2 className="text-sm font-bold mb-3">最近整卷成绩</h2>
         {recent.length === 0 ? (
-          <p className="text-sm text-gray-400 py-4 text-center">
-            还没有交过整卷 —— <Link href="/papers" className="text-blue-600">去整卷模拟</Link>
+          <p className="text-sm text-ink-3 py-4 text-center">
+            还没有交过整卷 —— <Link href="/papers" className="text-ink">去整卷模拟</Link>
           </p>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-line">
             {recent.map((a) => (
-              <Link key={a.id} href={`/attempt/${a.id}`} className="flex items-center gap-4 py-2.5 hover:bg-gray-50 rounded-lg px-2">
+              <Link key={a.id} href={`/attempt/${a.id}`} className="flex items-center gap-4 py-2.5 hover:bg-surface-2 rounded-lg px-2">
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-gray-800 truncate">{a.paper.title}</div>
-                  <div className="text-xs text-gray-400">
+                  <div className="text-sm text-ink truncate">{a.paper.title}</div>
+                  <div className="text-xs text-ink-3">
                     {a.submittedAt?.toLocaleString("zh-CN", { hour12: false })}
                     {a.durationSec != null && ` · ${Math.floor(a.durationSec / 60)}分${a.durationSec % 60}秒`}
                   </div>
                 </div>
                 {a.earnedScore != null && (
-                  <div className="text-lg font-bold text-blue-600">{a.earnedScore}<span className="text-xs text-gray-400"> 分</span></div>
+                  <div className="text-lg font-bold text-ink">{a.earnedScore}<span className="text-xs text-ink-3"> 分</span></div>
                 )}
-                <span className="text-gray-300">→</span>
+                <span className="text-ink-4">→</span>
               </Link>
             ))}
           </div>

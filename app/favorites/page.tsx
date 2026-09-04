@@ -67,14 +67,14 @@ export default async function FavoritesPage({
     <div className="space-y-5">
       <div>
         <h1 className="text-xl font-bold">我的收藏</h1>
-        <p className="mt-1 text-xs text-gray-400">共 {total} 题 · 收藏经典题与易错题，随时回看</p>
+        <p className="mt-1 text-xs text-ink-3">共 {total} 题 · 收藏经典题与易错题，随时回看</p>
       </div>
 
       {total === 0 ? (
-        <div className="rounded-2xl border border-dashed border-gray-200 py-16 text-center">
+        <div className="rounded-2xl border border-dashed border-line-strong py-16 text-center">
           <div className="text-3xl mb-2">🔖</div>
-          <p className="text-gray-500">还没有收藏。做题/看成绩单时点「☆ 收藏」就能收进来。</p>
-          <Link href="/papers" className="mt-4 inline-block rounded-lg bg-blue-600 px-5 py-2 text-sm text-white hover:bg-blue-700">
+          <p className="text-ink-2">还没有收藏。做题/看成绩单时点「☆ 收藏」就能收进来。</p>
+          <Link href="/papers" className="btn btn-primary mt-4">
             去试卷库
           </Link>
         </div>
@@ -82,16 +82,16 @@ export default async function FavoritesPage({
         <>
           <div className="space-y-4">
             {items.map((it) => (
-              <div key={it.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div key={it.id} className="card p-5">
                 <div className="flex items-start gap-2">
-                  <span className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-sm font-semibold text-blue-600">
+                  <span className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-surface-2 text-sm font-semibold text-ink-2">
                     {it.seq}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="mb-1.5 flex flex-wrap items-center gap-2">
                       <TypeBadge type={it.type} />
-                      <span className="text-xs text-gray-300">{it.score} 分</span>
-                      <Link href={`/paper/${it.paperSlug}#q-${it.seq}`} className="text-xs text-blue-600 hover:underline">
+                      <span className="text-xs text-ink-4">{it.score} 分</span>
+                      <Link href={`/paper/${it.paperSlug}#q-${it.seq}`} className="text-xs text-ink hover:underline">
                         {it.paperTitle} · 第 {it.seq} 题
                       </Link>
                       <div className="ml-auto">
@@ -102,8 +102,8 @@ export default async function FavoritesPage({
                     {it.options && (
                       <div className="mt-3 space-y-2">
                         {it.options.map((o) => (
-                          <div key={o.key} className="flex items-start gap-2.5 rounded-lg border border-gray-100 px-3 py-2">
-                            <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-gray-50 text-xs font-bold text-gray-500">
+                          <div key={o.key} className="flex items-start gap-2.5 rounded-lg border border-line px-3 py-2">
+                            <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-surface-2 text-xs font-bold text-ink-2">
                               {o.key}
                             </span>
                             <div className="flex-1 min-w-0 md-body" dangerouslySetInnerHTML={{ __html: o.html }} />
@@ -123,7 +123,7 @@ export default async function FavoritesPage({
                   key={p}
                   href={`/favorites?page=${p}`}
                   className={`px-3 py-1.5 rounded-md border ${
-                    p === cur ? "bg-blue-600 border-blue-600 text-white font-medium" : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    p === cur ? "bg-ink border-ink text-white font-medium" : "border-line text-ink-2 hover:bg-surface-2"
                   }`}
                 >
                   {p}
@@ -139,12 +139,12 @@ export default async function FavoritesPage({
 
 function TypeBadge({ type }: { type: string }) {
   const map: Record<string, [string, string]> = {
-    CHOICE: ["单选题", "bg-blue-50 text-blue-700 border-blue-100"],
-    MULTI_CHOICE: ["多选题", "bg-violet-50 text-violet-700 border-violet-100"],
-    JUDGE: ["判断题", "bg-amber-50 text-amber-700 border-amber-100"],
-    FILL: ["填空题", "bg-emerald-50 text-emerald-700 border-emerald-100"],
-    PROGRAM: ["编程题", "bg-rose-50 text-rose-700 border-rose-100"],
+    CHOICE: ["单选题", "bg-surface-2 text-ink-2 border-line"],
+    MULTI_CHOICE: ["多选题", "bg-surface-2 text-ink-2 border-line"],
+    JUDGE: ["判断题", "bg-surface-2 text-ink-2 border-line"],
+    FILL: ["填空题", "bg-surface-2 text-ink-2 border-line"],
+    PROGRAM: ["编程题", "bg-surface-2 text-ink-2 border-line"],
   };
-  const [label, cls] = map[type] ?? ["未知", "bg-gray-100 text-gray-600 border-gray-200"];
+  const [label, cls] = map[type] ?? ["未知", "bg-surface-2 text-ink-2 border-line"];
   return <span className={`text-[11px] px-1.5 py-0.5 rounded border ${cls}`}>{label}</span>;
 }

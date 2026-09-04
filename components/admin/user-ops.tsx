@@ -36,7 +36,7 @@ export default function UserOps({
     }
   }
 
-  if (isSelf) return <span className="text-xs text-gray-300">（自己）</span>;
+  if (isSelf) return <span className="text-xs text-ink-4">（自己）</span>;
 
   return (
     <div className="flex gap-1.5">
@@ -45,8 +45,8 @@ export default function UserOps({
         disabled={busy}
         className={`px-2 py-1 rounded-md text-[11px] border disabled:opacity-60 ${
           role === "ADMIN"
-            ? "border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100"
-            : "border-gray-200 text-gray-500 hover:bg-gray-50"
+            ? "border-line bg-surface-2 text-ink hover:bg-surface-2"
+            : "border-line text-ink-2 hover:bg-surface-2"
         }`}
       >
         {role === "ADMIN" ? "管理员(降为普通)" : "设为管理员"}
@@ -56,8 +56,8 @@ export default function UserOps({
         disabled={busy}
         className={`px-2 py-1 rounded-md text-[11px] border disabled:opacity-60 ${
           disabled
-            ? "border-green-200 text-green-600 hover:bg-green-50"
-            : "border-red-200 text-red-500 hover:bg-red-50"
+            ? "border-ok/30 text-ok hover:bg-ok-bg"
+            : "border-err/30 text-err hover:bg-err-bg"
         }`}
       >
         {disabled ? "解禁" : "禁用"}

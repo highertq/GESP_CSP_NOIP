@@ -49,18 +49,25 @@ export default async function PapersPage({
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-xl font-bold">试卷库</h1>
-        <span className="text-sm text-gray-400">共 {total} 套真题</span>
+    <div className="space-y-6">
+      <div className="flex items-baseline justify-between gap-4 flex-wrap">
+        <div>
+          <p className="eyebrow mb-1">
+            <span className="text-ink/30">// </span>exam-library
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-ink">试卷库</h1>
+        </div>
+        <span className="code text-xs text-ink-4">共 {total} 套真题</span>
       </div>
 
       {/* 分类 tab */}
       <div className="flex flex-wrap gap-2">
         <Link
           href={qs({ cat: undefined, page: "1" })}
-          className={`px-3.5 py-1.5 rounded-full text-sm ${
-            !cat ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-blue-300"
+          className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors duration-150 ${
+            !cat
+              ? "bg-ink text-white"
+              : "bg-surface border border-line text-ink-2 hover:border-line-strong hover:text-ink"
           }`}
         >
           全部
@@ -69,8 +76,10 @@ export default async function PapersPage({
           <Link
             key={c.value}
             href={qs({ cat: c.value, level: undefined, page: "1" })}
-            className={`px-3.5 py-1.5 rounded-full text-sm ${
-              cat === c.value ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-blue-300"
+            className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors duration-150 ${
+              cat === c.value
+                ? "bg-ink text-white"
+                : "bg-surface border border-line text-ink-2 hover:border-line-strong hover:text-ink"
             }`}
           >
             {c.label}
@@ -81,11 +90,11 @@ export default async function PapersPage({
       {/* 级别筛选（GESP） */}
       {levelMeta.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-gray-400">级别：</span>
+          <span className="code text-[11px] text-ink-4 mr-1">level:</span>
           <Link
             href={qs({ level: undefined, page: "1" })}
-            className={`px-2.5 py-1 rounded text-xs ${
-              !level ? "bg-gray-800 text-white" : "bg-white border border-gray-200 text-gray-600"
+            className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors duration-150 ${
+              !level ? "bg-ink text-white" : "bg-surface border border-line text-ink-2 hover:border-line-strong"
             }`}
           >
             全部
@@ -94,8 +103,10 @@ export default async function PapersPage({
             <Link
               key={lv}
               href={qs({ level: lv, page: "1" })}
-              className={`px-2.5 py-1 rounded text-xs ${
-                level === lv ? "bg-gray-800 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-gray-400"
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors duration-150 ${
+                level === lv
+                  ? "bg-ink text-white"
+                  : "bg-surface border border-line text-ink-2 hover:border-line-strong"
               }`}
             >
               {lv} 级
@@ -106,9 +117,12 @@ export default async function PapersPage({
 
       {/* 列表 */}
       {papers.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 text-sm">该分类暂无试卷</div>
+        <div className="card py-20 text-center space-y-2">
+          <p className="code text-sm text-ink-3">no_papers_found()</p>
+          <p className="text-sm text-ink-3">该分类暂无试卷，换个筛选条件试试</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {papers.map((p) => (
             <PaperCard key={p.slug} paper={p} />
           ))}
@@ -127,15 +141,17 @@ export default async function PapersPage({
             }, [])
             .map((n, i) =>
               n === "…" ? (
-                <span key={`e${i}`} className="px-1 text-gray-400">
+                <span key={`e${i}`} className="px-1 text-ink-4 text-sm">
                   …
                 </span>
               ) : (
                 <Link
                   key={n}
                   href={qs({ page: String(n) })}
-                  className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm ${
-                    n === page ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-blue-300"
+                  className={`num w-9 h-9 flex items-center justify-center rounded-lg text-sm transition-colors duration-150 ${
+                    n === page
+                      ? "bg-ink text-white"
+                      : "bg-surface border border-line text-ink-2 hover:border-line-strong hover:text-ink"
                   }`}
                 >
                   {n}
@@ -145,9 +161,9 @@ export default async function PapersPage({
         </div>
       )}
 
-      <p className="text-xs text-gray-300 pt-2">
-        当前筛选：{categoryLabel(cat ?? "全部")}
-        {level ? ` · ${level} 级` : ""}
+      <p className="code text-[11px] text-ink-4 pt-1">
+        filter: {categoryLabel(cat ?? "all")}
+        {level ? ` · level ${level}` : ""} · sorted by exam_date desc
       </p>
     </div>
   );

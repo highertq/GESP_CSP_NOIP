@@ -42,23 +42,23 @@ export default async function PaperDetailPage({
 
   return (
     <div className="space-y-5">
-      <nav className="text-xs text-gray-400">
-        <Link href="/papers" className="hover:text-blue-600">
+      <nav className="text-xs text-ink-3">
+        <Link href="/papers" className="hover:text-ink">
           试卷库
         </Link>
         <span className="mx-1.5">/</span>
         <span>{categoryLabel(paper.category)}</span>
       </nav>
 
-      <section className="bg-white border border-gray-200 rounded-2xl p-6">
+      <section className="card p-6">
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-medium">
+          <span className="pill-code">
             {categoryLabel(paper.category)}
             {paper.level ? ` ${paper.level}级` : ""}
           </span>
-          {paper.examDate && <span className="text-gray-400">{paper.examDate}</span>}
+          {paper.examDate && <span className="text-ink-3">{paper.examDate}</span>}
         </div>
-        <h1 className="mt-3 text-2xl font-bold text-gray-900">{paper.title}</h1>
+        <h1 className="mt-3 text-2xl font-bold text-ink">{paper.title}</h1>
         <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
           {[
             ["题量", `${paper.questions.length} 题`],
@@ -66,23 +66,23 @@ export default async function PaperDetailPage({
             ["建议时长", `${paper.timeLimit} 分钟`],
             ["卷面总分", `${paper.totalScore} 分`],
           ].map(([k, v]) => (
-            <div key={k} className="rounded-xl bg-gray-50 py-3">
-              <div className="text-xs text-gray-400">{k}</div>
-              <div className="text-lg font-semibold text-gray-900 mt-0.5">{v}</div>
+            <div key={k} className="rounded-xl bg-surface-2 py-3">
+              <div className="text-xs text-ink-3">{k}</div>
+              <div className="text-lg font-semibold text-ink mt-0.5">{v}</div>
             </div>
           ))}
         </div>
-        {paper.desc && <p className="mt-4 text-sm text-gray-500">{paper.desc}</p>}
+        {paper.desc && <p className="mt-4 text-sm text-ink-2">{paper.desc}</p>}
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <Link
             href={`/paper/${paper.slug}/do`}
-            className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+            className="btn btn-primary"
           >
             开始整卷模拟
           </Link>
-          <span className="text-xs text-gray-400">计时作答 · 交卷即时判分 · 错题自动进错题本（需登录）</span>
+          <span className="text-xs text-ink-3">计时作答 · 交卷即时判分 · 错题自动进错题本（需登录）</span>
           {bundle.programCount > 0 && (
-            <span className="w-full text-xs text-gray-400">
+            <span className="w-full text-xs text-ink-3">
               含 {bundle.programCount} 道编程大题：在线只判客观题，编程题请自行前往洛谷等 OJ 提交验证
             </span>
           )}
@@ -94,25 +94,25 @@ export default async function PaperDetailPage({
         {items.map((item, idx) => {
           const isSectionStart = idx === 0 || items[idx - 1].section !== item.section;
           return (
-            <div key={item.id} id={`q-${item.seq}`} className="bg-white border border-gray-200 rounded-xl p-5">
+            <div key={item.id} id={`q-${item.seq}`} className="card p-5">
               {isSectionStart && item.section && (
-                <div className="-mt-2 mb-3 text-xs font-semibold text-blue-600 border-b border-blue-100 pb-2">
+                <div className="-mt-2 mb-3 text-xs font-semibold text-ink-2 border-b border-line pb-2">
                   {item.section}
                 </div>
               )}
               <div className="flex items-start gap-2">
-                <span className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-sm font-semibold text-gray-600">
+                <span className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-surface-2 text-sm font-semibold text-ink-2">
                   {item.seq}
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <TypeBadge type={item.type} />
-                    <span className="text-xs text-gray-300">{item.score} 分</span>
+                    <span className="text-xs text-ink-4">{item.score} 分</span>
                   </div>
 
                   {item.codeHtml && (
-                    <details open className="mb-3 rounded-lg border border-gray-200 bg-gray-50">
-                      <summary className="cursor-pointer select-none px-3 py-1.5 text-xs font-medium text-gray-500">
+                    <details open className="mb-3 rounded-lg border border-line bg-surface-2">
+                      <summary className="cursor-pointer select-none px-3 py-1.5 text-xs font-medium text-ink-2">
                         阅读程序代码（共 {item.seq}-{groupLastSeq(items, idx)} 题共用）
                       </summary>
                       <div
@@ -129,9 +129,9 @@ export default async function PaperDetailPage({
                       {item.options.map((o) => (
                         <div
                           key={o.key}
-                          className="flex items-start gap-2.5 rounded-lg border border-gray-100 px-3 py-2"
+                          className="flex items-start gap-2.5 rounded-lg border border-line px-3 py-2"
                         >
-                          <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-700">
+                          <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-surface-2 text-xs font-bold text-ink-2">
                             {o.key}
                           </span>
                           <div className="flex-1 min-w-0 md-body" dangerouslySetInnerHTML={{ __html: o.html }} />
@@ -141,7 +141,7 @@ export default async function PaperDetailPage({
                   )}
 
                   {item.type === "PROGRAM" && (
-                    <div className="mt-3 rounded-lg bg-rose-50 border border-rose-100 px-4 py-2.5 text-xs text-rose-600">
+                    <div className="mt-3 rounded-lg border border-line bg-surface-2 px-4 py-2.5 text-xs text-ink-2">
                       本题为编程大题：请复制题面到洛谷 / GESP OJ 等平台编写并提交代码（本站不判分）
                     </div>
                   )}
@@ -165,12 +165,12 @@ function groupLastSeq(items: { seq: number; codeHtml?: string }[], idx: number):
 
 function TypeBadge({ type }: { type: string }) {
   const map: Record<string, [string, string]> = {
-    CHOICE: ["单选题", "bg-blue-50 text-blue-700 border-blue-100"],
-    MULTI_CHOICE: ["多选题", "bg-violet-50 text-violet-700 border-violet-100"],
-    JUDGE: ["判断题", "bg-amber-50 text-amber-700 border-amber-100"],
-    FILL: ["填空题", "bg-emerald-50 text-emerald-700 border-emerald-100"],
-    PROGRAM: ["编程题", "bg-rose-50 text-rose-700 border-rose-100"],
+    CHOICE: ["单选题", "bg-surface-2 text-ink-2 border-line"],
+    MULTI_CHOICE: ["多选题", "bg-surface-2 text-ink-2 border-line"],
+    JUDGE: ["判断题", "bg-surface-2 text-ink-2 border-line"],
+    FILL: ["填空题", "bg-surface-2 text-ink-2 border-line"],
+    PROGRAM: ["编程题", "bg-surface-2 text-ink-2 border-line"],
   };
-  const [label, cls] = map[type] ?? ["未知", "bg-gray-100 text-gray-600 border-gray-200"];
+  const [label, cls] = map[type] ?? ["未知", "bg-surface-2 text-ink-2 border-line"];
   return <span className={`text-[11px] px-1.5 py-0.5 rounded border ${cls}`}>{label}</span>;
 }

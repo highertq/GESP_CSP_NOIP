@@ -92,22 +92,22 @@ export default async function WrongPage({
       <div className="flex items-end justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-xl font-bold">错题本</h1>
-          <p className="mt-1 text-xs text-gray-400">
+          <p className="mt-1 text-xs text-ink-3">
             {mastered
               ? "已掌握的错题（可恢复练习）"
               : `整卷模拟答错的题自动收录，共 ${openCount} 题待攻克`}
           </p>
         </div>
-        <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+        <div className="flex rounded-lg border border-line overflow-hidden text-sm">
           <Link
             href="/wrong"
-            className={`px-4 py-1.5 ${!mastered ? "bg-blue-600 text-white font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+            className={`px-4 py-1.5 ${!mastered ? "bg-ink text-white font-medium" : "text-ink-2 hover:bg-surface-2"}`}
           >
             未掌握 {openCount > 0 && <span className="opacity-70">({openCount})</span>}
           </Link>
           <Link
             href="/wrong?tab=mastered"
-            className={`px-4 py-1.5 ${mastered ? "bg-blue-600 text-white font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+            className={`px-4 py-1.5 ${mastered ? "bg-ink text-white font-medium" : "text-ink-2 hover:bg-surface-2"}`}
           >
             已掌握
           </Link>
@@ -115,13 +115,13 @@ export default async function WrongPage({
       </div>
 
       {total === 0 ? (
-        <div className="rounded-2xl border border-dashed border-gray-200 py-16 text-center">
+        <div className="rounded-2xl border border-dashed border-line-strong py-16 text-center">
           <div className="text-3xl mb-2">{mastered ? "🌱" : "🎉"}</div>
-          <p className="text-gray-500">
+          <p className="text-ink-2">
             {mastered ? "还没有已掌握的错题" : "太干净了，还没有错题 —— 去整卷模拟检验一下？"}
           </p>
           {!mastered && (
-            <Link href="/papers" className="mt-4 inline-block rounded-lg bg-blue-600 px-5 py-2 text-sm text-white hover:bg-blue-700">
+            <Link href="/papers" className="btn btn-primary mt-4">
               去刷一套
             </Link>
           )}
@@ -150,7 +150,7 @@ function Pager({ cur, pages, href }: { cur: number; pages: number; href: string 
           key={p}
           href={href + p}
           className={`px-3 py-1.5 rounded-md border ${
-            p === cur ? "bg-blue-600 border-blue-600 text-white font-medium" : "border-gray-200 text-gray-600 hover:bg-gray-50"
+            p === cur ? "bg-ink border-ink text-white font-medium" : "border-line text-ink-2 hover:bg-surface-2"
           }`}
         >
           {p}

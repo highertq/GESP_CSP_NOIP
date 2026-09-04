@@ -77,22 +77,22 @@ export default function WrongCard({ card }: { card: WrongCardData }) {
   const optionDisabled = card.answersMissing;
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="card p-5">
       <div className="flex items-start gap-2">
-        <span className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-amber-100 text-sm font-semibold text-amber-700">
+        <span className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-surface-2 text-sm font-semibold text-ink-2">
           {card.seq}
         </span>
         <div className="flex-1 min-w-0">
           <div className="mb-1.5 flex flex-wrap items-center gap-2">
             <TypeBadge type={card.type} />
-            <span className="text-xs text-gray-300">{card.score} 分</span>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-ink-4">{card.score} 分</span>
+            <span className="text-xs text-ink-3">
               出自
-              <Link href={`/paper/${card.paperSlug}#q-${card.seq}`} className="ml-1 text-blue-600 hover:underline">
+              <Link href={`/paper/${card.paperSlug}#q-${card.seq}`} className="ml-1 text-ink hover:underline">
                 {card.paperTitle}
               </Link>
             </span>
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">
+            <span className="text-[11px] px-1.5 py-0.5 rounded bg-surface-2 text-ink-2">
               累计答错 {card.wrongCount} 次
             </span>
             <div className="ml-auto flex items-center gap-1.5">
@@ -102,14 +102,14 @@ export default function WrongCard({ card }: { card: WrongCardData }) {
                   <button
                     onClick={() => stateAction("unmaster")}
                     disabled={actionBusy}
-                    className="px-2 py-1 text-xs rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-60"
+                    className="px-2 py-1 text-xs rounded-md border border-line text-ink-2 hover:bg-surface-2 disabled:opacity-60"
                   >
                     恢复未掌握
                   </button>
                   <button
                     onClick={() => stateAction("remove")}
                     disabled={actionBusy}
-                    className="px-2 py-1 text-xs rounded-md border border-red-200 text-red-500 hover:bg-red-50 disabled:opacity-60"
+                    className="px-2 py-1 text-xs rounded-md border border-err/30 text-err hover:bg-err-bg disabled:opacity-60"
                   >
                     删除记录
                   </button>
@@ -119,14 +119,14 @@ export default function WrongCard({ card }: { card: WrongCardData }) {
                   <button
                     onClick={() => stateAction("master")}
                     disabled={actionBusy}
-                    className="px-2 py-1 text-xs rounded-md border border-green-200 text-green-600 hover:bg-green-50 disabled:opacity-60"
+                    className="px-2 py-1 text-xs rounded-md border border-ok/30 text-ok hover:bg-ok-bg disabled:opacity-60"
                   >
                     标为已掌握
                   </button>
                   <button
                     onClick={() => stateAction("remove")}
                     disabled={actionBusy}
-                    className="px-2 py-1 text-xs rounded-md border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 disabled:opacity-60"
+                    className="px-2 py-1 text-xs rounded-md border border-line text-ink-3 hover:text-err hover:border-err/25 disabled:opacity-60"
                   >
                     移除
                   </button>
@@ -136,7 +136,7 @@ export default function WrongCard({ card }: { card: WrongCardData }) {
           </div>
 
           {card.answersMissing && (
-            <div className="mb-2 rounded bg-amber-50 border border-amber-200 px-3 py-1.5 text-xs text-amber-600">
+            <div className="mb-2 rounded border border-line bg-surface-2 px-3 py-1.5 text-xs text-ink-2">
               官方暂无此题答案，只能收藏复习，无法判分。
             </div>
           )}
@@ -176,7 +176,7 @@ export default function WrongCard({ card }: { card: WrongCardData }) {
               onChange={(e) => setValue(e.target.value)}
               disabled={card.answersMissing}
               placeholder="输入你的答案…"
-              className="mt-3 w-full max-w-sm rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-3 w-full max-w-sm rounded-lg border border-line-strong px-3 py-2 text-sm outline-none focus:border-ink focus:ring-2 focus:ring-ink/10"
             />
           )}
           {card.type === "JUDGE" && (
@@ -188,8 +188,8 @@ export default function WrongCard({ card }: { card: WrongCardData }) {
                   disabled={card.answersMissing}
                   className={`px-5 py-1.5 rounded-lg border text-sm font-medium transition-colors disabled:opacity-50 ${
                     value === v
-                      ? "border-blue-600 bg-blue-600 text-white"
-                      : "border-gray-200 bg-white text-gray-600 hover:border-blue-300"
+                      ? "border-ink bg-ink text-white"
+                      : "border-line bg-surface text-ink-2 hover:border-line-strong"
                   }`}
                 >
                   {v === "True" ? "对" : "错"}
@@ -202,12 +202,12 @@ export default function WrongCard({ card }: { card: WrongCardData }) {
             <button
               onClick={submit}
               disabled={busy || card.answersMissing || (card.type !== "FILL" && !value)}
-              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="btn btn-primary"
             >
               {busy ? "判分中…" : card.type === "FILL" ? "提交答案" : "提交判分"}
             </button>
             {!result && (
-              <span className="text-xs text-gray-400">答对累计达标自动转「已掌握」并移出列表</span>
+              <span className="text-xs text-ink-3">答对累计达标自动转「已掌握」并移出列表</span>
             )}
           </div>
 
@@ -226,9 +226,9 @@ function ResultBanner({ result, questionType }: { result: Result; questionType: 
       className={`mt-3 rounded-lg border px-4 py-3 text-sm ${
         result.correct
           ? result.mastered
-            ? "border-green-300 bg-green-50 text-green-700"
-            : "border-blue-200 bg-blue-50 text-blue-700"
-          : "border-red-200 bg-red-50 text-red-600"
+            ? "border-ink bg-ink text-white"
+            : "border-ok/30 bg-ok-bg text-ok"
+          : "border-err/30 bg-err-bg text-err"
       }`}
     >
       <div className="font-semibold">
@@ -267,12 +267,12 @@ function OptionRow({
     <div
       onClick={disabled ? undefined : onToggle}
       className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2 transition-colors ${
-        selected ? "border-blue-400 bg-blue-50" : "border-gray-100 hover:border-blue-200"
+        selected ? "border-ink/30 bg-surface-2" : "border-line hover:border-line-strong"
       } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
     >
       <span
         className={`shrink-0 w-5 h-5 flex items-center justify-center rounded-full border text-[11px] font-bold ${
-          selected ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 text-gray-400"
+          selected ? "border-ink bg-ink text-white" : "border-line-strong text-ink-3"
         }`}
       >
         {isMulti && selected ? "✓" : optionKey}
@@ -284,12 +284,12 @@ function OptionRow({
 
 function TypeBadge({ type }: { type: WrongCardData["type"] }) {
   const map: Record<string, [string, string]> = {
-    CHOICE: ["单选题", "bg-blue-50 text-blue-700 border-blue-100"],
-    MULTI_CHOICE: ["多选题", "bg-violet-50 text-violet-700 border-violet-100"],
-    JUDGE: ["判断题", "bg-amber-50 text-amber-700 border-amber-100"],
-    FILL: ["填空题", "bg-emerald-50 text-emerald-700 border-emerald-100"],
-    PROGRAM: ["编程题", "bg-rose-50 text-rose-700 border-rose-100"],
+    CHOICE: ["单选题", "bg-surface-2 text-ink-2 border-line"],
+    MULTI_CHOICE: ["多选题", "bg-surface-2 text-ink-2 border-line"],
+    JUDGE: ["判断题", "bg-surface-2 text-ink-2 border-line"],
+    FILL: ["填空题", "bg-surface-2 text-ink-2 border-line"],
+    PROGRAM: ["编程题", "bg-surface-2 text-ink-2 border-line"],
   };
-  const [label, cls] = map[type] ?? ["未知", "bg-gray-100 text-gray-600 border-gray-200"];
+  const [label, cls] = map[type] ?? ["未知", "bg-surface-2 text-ink-2 border-line"];
   return <span className={`text-[11px] px-1.5 py-0.5 rounded border ${cls}`}>{label}</span>;
 }

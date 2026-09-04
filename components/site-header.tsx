@@ -6,10 +6,26 @@ import { useEffect, useState } from "react";
 
 type Me = { username: string; nickname: string; role: string } | null;
 
-const NAV = [
-  { href: "/", label: "首页" },
-  { href: "/papers", label: "试卷库" },
-];
+function Logo() {
+  return (
+    <span className="inline-grid place-items-center w-8 h-8 rounded-[9px] bg-ink text-white shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="m8 6-6 6 6 6" />
+        <path d="m16 6 6 6-6 6" />
+      </svg>
+    </span>
+  );
+}
 
 export default function SiteHeader() {
   const pathname = usePathname();
@@ -33,88 +49,87 @@ export default function SiteHeader() {
     router.refresh();
   }
 
+  const linkCls = (active: boolean) =>
+    `px-3 py-1.5 rounded-lg text-[13.5px] font-medium whitespace-nowrap transition-colors duration-150 ${
+      active
+        ? "bg-surface-2 text-ink"
+        : "text-ink-2 hover:bg-surface-2 hover:text-ink"
+    }`;
+
+  const navItems = [
+    { href: "/", label: "首页", active: pathname === "/" },
+    {
+      href: "/papers",
+      label: "试卷库",
+      active: pathname.startsWith("/papers") || pathname.startsWith("/paper/"),
+    },
+  ];
+  if (me) {
+    navItems.push(
+      {
+        href: "/wrong",
+        label: "错题本",
+        active: pathname.startsWith("/wrong"),
+      },
+      {
+        href: "/favorites",
+        label: "收藏",
+        active: pathname.startsWith("/favorites"),
+      },
+    );
+    if (me.role === "ADMIN") {
+      navItems.push({
+        href: "/admin",
+        label: "管理",
+        active: pathname.startsWith("/admin"),
+      });
+    }
+  }
+
   return (
-    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-200">
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="font-bold text-lg text-blue-600 whitespace-nowrap">
+    <header className="sticky top-0 z-40 border-b border-line bg-[#fcfcfb]/85 backdrop-blur-md">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-2.5 shrink-0">
+          <Logo />
+          <span className="font-bold text-[16.5px] tracking-tight text-ink whitespace-nowrap">
             信奥刷题站
-          </Link>
-          <nav className="flex items-center gap-1 text-sm">
-            {NAV.map((n) => {
-              const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
-              return (
-                <Link
-                  key={n.href}
-                  href={n.href}
-                  className={`px-3 py-1.5 rounded-md transition-colors ${
-                    active ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                >
-                  {n.label}
-                </Link>
-              );
-            })}
-            {me && me.role === "ADMIN" && (
-              <Link
-                href="/admin"
-                className="px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-100"
-              >
-                管理
-              </Link>
-            )}
-            {me && (
-              <>
-                <Link
-                  href="/wrong"
-                  className={`px-3 py-1.5 rounded-md transition-colors ${
-                    pathname.startsWith("/wrong") ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                >
-                  错题本
-                </Link>
-                <Link
-                  href="/favorites"
-                  className={`px-3 py-1.5 rounded-md transition-colors ${
-                    pathname.startsWith("/favorites") ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                >
-                  收藏
-                </Link>
-              </>
-            )}
-          </nav>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
+          </span>
+        </Link>
+
+        {/* 导航：窄屏可横向滚动，不破版 */}
+        <nav className="flex-1 flex items-center gap-0.5 overflow-x-auto no-scrollbar -mx-1 px-1">
+          {navItems.map((n) => (
+            <Link key={n.href} href={n.href} className={linkCls(n.active)}>
+              {n.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-1.5 shrink-0 text-[13.5px]">
           {!loaded ? (
-            <span className="text-gray-400">…</span>
+            <span className="px-2 text-ink-4">…</span>
           ) : me ? (
             <>
               <Link
                 href="/me"
-                className="px-3 py-1.5 rounded-md text-gray-700 hover:bg-gray-100"
+                className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors duration-150 ${
+                  pathname.startsWith("/me")
+                    ? "bg-surface-2 text-ink"
+                    : "text-ink hover:bg-surface-2"
+                }`}
               >
                 {me.nickname}
               </Link>
-              <button
-                onClick={logout}
-                className="px-3 py-1.5 rounded-md text-gray-500 hover:bg-gray-100"
-              >
+              <button onClick={logout} className="btn btn-ghost btn-sm px-2.5 text-ink-3">
                 退出
               </button>
             </>
           ) : (
             <>
-              <Link
-                href="/auth/login"
-                className="px-3 py-1.5 rounded-md text-gray-700 hover:bg-gray-100"
-              >
+              <Link href="/auth/login" className="btn btn-ghost btn-sm">
                 登录
               </Link>
-              <Link
-                href="/auth/register"
-                className="px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-              >
+              <Link href="/auth/register" className="btn btn-primary btn-sm">
                 注册
               </Link>
             </>
