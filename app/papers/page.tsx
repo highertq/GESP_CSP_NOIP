@@ -40,7 +40,9 @@ export default async function PapersPage({
   const levelMeta = cat === "GESP" ? ["1", "2", "3", "4", "5", "6", "7", "8"] : [];
 
   const qs = (patch: Record<string, string | undefined>) => {
-    const next: Record<string, string> = { ...(cat ? { cat } : {}) };
+    const next: Record<string, string> = {};
+    const c = "cat" in patch ? patch.cat : cat;
+    if (c) next.cat = c;
     const lv = "level" in patch ? patch.level : level;
     if (lv) next.level = lv;
     const pg = "page" in patch ? patch.page : undefined;
