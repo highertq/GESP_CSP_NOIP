@@ -135,7 +135,7 @@ export default function WrongCard({ card }: { card: WrongCardData }) {
             </div>
           </div>
 
-          {card.answersMissing && (
+          {card.answersMissing && card.type !== "PROGRAM" && (
             <div className="mb-2 rounded border border-line bg-surface-2 px-3 py-1.5 text-xs text-ink-2">
               官方暂无此题答案，只能收藏复习，无法判分。
             </div>

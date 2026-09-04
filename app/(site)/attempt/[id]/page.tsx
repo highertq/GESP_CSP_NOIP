@@ -158,7 +158,7 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
                       <TypeBadge type={item.type} />
                       <span className="text-xs text-ink-4">{item.score} 分</span>
                       <StateBadge state={state} />
-                      {q?.answersMissing && (
+                      {q?.answersMissing && item.type !== "PROGRAM" && (
                         <span className="text-[11px] px-1.5 py-0.5 rounded border border-line bg-surface-2 text-ink-3">
                           官方暂无答案，未计分
                         </span>

@@ -340,7 +340,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
                 </span>
                 <TypeBadge type={item.type} />
                 <span className="text-xs text-ink-4">{item.score} 分</span>
-                {item.answersMissing && (
+                {item.answersMissing && item.type !== "PROGRAM" && (
                   <span className="text-[11px] px-1.5 py-0.5 rounded border border-line bg-surface-2 text-ink-3">
                     此题官方暂无答案，交卷不计分
                   </span>
