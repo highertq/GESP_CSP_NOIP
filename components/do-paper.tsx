@@ -219,6 +219,34 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
           <span className="hidden sm:inline text-xs text-ink-3 tabular-nums">
             已答 <b className="text-ink">{answeredCount}</b>/{totalObjective}
           </span>
+          {/* 切题组（顶部操作，常驻可见） */}
+          <div className="flex items-center gap-1 sm:gap-1.5 ml-1 sm:ml-2 pl-2 sm:pl-3 border-l border-line">
+            <button
+              onClick={goPrev}
+              disabled={cur === 0}
+              title="上一题 (←)"
+              aria-label="上一题"
+              className="grid place-items-center w-8 h-8 rounded-lg border border-line bg-surface text-ink-2 hover:border-ink/60 hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
+            <span className="font-mono text-[11.5px] text-ink-3 tabular-nums min-w-[3.4rem] text-center">
+              {cur + 1} / {items.length}
+            </span>
+            <button
+              onClick={goNext}
+              disabled={cur === items.length - 1}
+              title={cur === items.length - 1 ? "已是最后一题" : "下一题 (→)"}
+              aria-label="下一题"
+              className="grid place-items-center w-8 h-8 rounded-lg border border-line bg-surface text-ink-2 hover:border-ink/60 hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </button>
+          </div>
           <span
             className={`font-mono text-base sm:text-lg font-bold tabular-nums ${
               remainingMs < 5 * 60_000 ? "text-err animate-pulse" : "text-ink"
@@ -321,7 +349,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
             </div>
           </div>
 
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+          <div className="w-full px-4 sm:px-8 py-6">
             {/* section 头 */}
             {item.section && (items[cur - 1]?.section !== item.section) && (
               <div className="mb-3 flex items-baseline gap-3">
@@ -396,29 +424,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
               )}
             </div>
 
-            {/* 底部切题 */}
-            <div className="mt-5 flex items-center justify-between gap-3">
-              <button
-                onClick={goPrev}
-                disabled={cur === 0}
-                className="btn btn-outline !py-2 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                ← 上一题
-              </button>
-              <span className="text-xs text-ink-3 tabular-nums">
-                {cur + 1} / {items.length}
-              </span>
-              {cur < items.length - 1 ? (
-                <button onClick={goNext} className="btn btn-outline !py-2">
-                  下一题 →
-                </button>
-              ) : (
-                <button onClick={() => setConfirmOpen(true)} disabled={submitting} className="btn btn-primary !py-2">
-                  完成交卷
-                </button>
-              )}
             </div>
-          </div>
         </div>
       </div>
 

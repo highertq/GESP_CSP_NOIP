@@ -74,7 +74,7 @@ export default async function HomePage() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebSite",
-            name: "信奥刷题站",
+            name: "曲奇编程",
             description:
               "免费在线刷 GESP / CSP-J / CSP-S / NCT 信息学奥赛初赛真题：单选、多选、判断、填空即时判分，自动沉淀错题本，支持整卷模拟计时。",
             inLanguage: "zh-CN",
@@ -87,27 +87,15 @@ export default async function HomePage() {
         <div className="hero-grid absolute inset-0 pointer-events-none" aria-hidden="true" />
         <div className="relative pt-10 sm:pt-14 pb-12 sm:pb-16 grid lg:grid-cols-[1.12fr_0.88fr] gap-10 lg:gap-14 items-center">
           <div className="fade-up">
-            <p className="code text-xs tracking-[0.06em] text-ink-3 mb-6">
-              <span className="text-ink-4">// </span>
-              信息学奥赛初赛 · 客观题在线练习
-            </p>
-            <h1 className="text-[2.7rem] leading-[1.06] sm:text-[3.6rem] font-extrabold tracking-[-0.035em] text-ink">
-              信奥初赛真题
-              <br />
-              <span className="relative inline-block">
-                <span
-                  className="absolute inset-x-[-0.05em] bottom-[0.08em] h-[0.34em] rounded-[3px] bg-[#e6e6e1]"
-                  aria-hidden="true"
-                />
-                <span className="relative">免费开刷</span>
-              </span>
+            <h1 className="text-[3.4rem] sm:text-[5.2rem] leading-[1] font-extrabold tracking-[-0.045em] text-ink">
+              曲径通优
             </h1>
-            <p className="mt-6 max-w-md text-[15px] leading-relaxed text-ink-2">
-              覆盖 GESP / CSP-J / CSP-S / NCT 历年初赛真题，提交即时判分，答错自动沉淀错题本。整卷模拟、错题重练、收藏标记——一站备考。
+            <p className="mt-5 max-w-lg text-[15.5px] sm:text-base leading-relaxed text-ink-2">
+              GESP / CSP-J / CSP-S / NCT 历年初赛真题在线练习，即时判分 + 错题沉淀 + 整卷模拟计时。
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="mt-8">
               <Link href="/papers" className="btn btn-primary btn-lg">
-                开始刷题
+                立即刷题
                 <svg
                   width="15"
                   height="15"
@@ -123,13 +111,7 @@ export default async function HomePage() {
                   <path d="m12 5 7 7-7 7" />
                 </svg>
               </Link>
-              <Link href="/papers?cat=GESP" className="btn btn-outline btn-lg">
-                GESP 分级练习
-              </Link>
             </div>
-            <p className="code mt-6 text-[11.5px] text-ink-4">
-              $ 游客可直接体验 · 注册登录后记录 / 错题 / 收藏全同步
-            </p>
           </div>
 
           {/* 数据面板 */}

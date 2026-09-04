@@ -102,7 +102,7 @@ export default function SiteHeader() {
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
           <Logo />
           <span className="font-bold text-[16.5px] tracking-tight text-ink whitespace-nowrap">
-            信奥刷题站
+            曲奇编程
           </span>
         </Link>
 

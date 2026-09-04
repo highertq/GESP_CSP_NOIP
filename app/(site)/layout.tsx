@@ -35,7 +35,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             <div className="space-y-3">
               <div className="flex items-center gap-2.5">
                 <FooterLogo />
-                <span className="font-bold text-[15px] tracking-tight text-ink">信奥刷题站</span>
+                <span className="font-bold text-[15px] tracking-tight text-ink">曲奇编程</span>
               </div>
               <p className="text-[13px] leading-relaxed text-ink-3 max-w-xs">
                 GESP / CSP-J / CSP-S / NCT 初赛客观题在线练习平台。即时判分、错题沉淀、整卷模拟，把初赛刷成肌肉记忆。
@@ -65,7 +65,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             </div>
           </div>
           <div className="mt-8 pt-6 border-t border-line flex flex-wrap items-center justify-between gap-2 text-xs text-ink-4">
-            <span>© 2026 信奥刷题站 · GESP / CSP / NOIP 备考</span>
+            <span>© 2026 曲奇编程 · GESP / CSP / NOIP 备考</span>
             <span className="code">oj-practice · MIT 思路启发自 olympiad-practice-system</span>
           </div>
         </div>
