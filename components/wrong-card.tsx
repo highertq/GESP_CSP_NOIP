@@ -88,7 +88,7 @@ export default function WrongCard({ card }: { card: WrongCardData }) {
             <span className="text-xs text-ink-4">{card.score} 分</span>
             <span className="text-xs text-ink-3">
               出自
-              <Link href={`/paper/${card.paperSlug}#q-${card.seq}`} className="ml-1 text-ink hover:underline">
+              <Link href={`/paper/${card.paperSlug}`} className="ml-1 text-ink hover:underline">
                 {card.paperTitle}
               </Link>
             </span>

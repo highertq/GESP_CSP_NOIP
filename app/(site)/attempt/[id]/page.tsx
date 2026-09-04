@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prepareExam } from "@/lib/prepare-exam";
 import type { ExamItem } from "@/lib/prepare-exam";
 import FavoriteButton from "@/components/favorite-button";
+import LuoguBlock from "@/components/luogu-block";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -184,9 +185,7 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
                     <div className="md-body" dangerouslySetInnerHTML={{ __html: item.html }} />
 
                     {item.type === "PROGRAM" ? (
-                      <div className="mt-3 rounded-lg border border-line bg-surface-2 px-4 py-2.5 text-xs text-ink-2">
-                        编程大题不在线判分：请复制题面到洛谷 / GESP OJ 等平台提交验证。
-                      </div>
+                      <LuoguBlock externalUrl={item.externalUrl} />
                     ) : (
                       <>
                         {item.options && (

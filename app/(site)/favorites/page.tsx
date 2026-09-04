@@ -91,7 +91,7 @@ export default async function FavoritesPage({
                     <div className="mb-1.5 flex flex-wrap items-center gap-2">
                       <TypeBadge type={it.type} />
                       <span className="text-xs text-ink-4">{it.score} 分</span>
-                      <Link href={`/paper/${it.paperSlug}#q-${it.seq}`} className="text-xs text-ink hover:underline">
+                      <Link href={`/paper/${it.paperSlug}`} className="text-xs text-ink hover:underline">
                         {it.paperTitle} · 第 {it.seq} 题
                       </Link>
                       <div className="ml-auto">

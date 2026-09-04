@@ -16,6 +16,7 @@ export type ExamItem = {
   html: string; // 题干（程序首题已剥离共享代码）
   codeHtml?: string; // 共享代码（程序首题携带，client 折叠展示）
   options?: { key: string; html: string }[];
+  externalUrl?: string | null; // PROGRAM 题洛谷原题链接（真题卷有值，模拟卷自编题无）
 };
 
 export type ExamBundle = {
@@ -42,6 +43,7 @@ type QRow = {
   content: string;
   options: unknown;
   answersMissing: boolean;
+  externalUrl?: string | null;
 };
 
 export async function prepareExam(
@@ -83,6 +85,7 @@ export async function prepareExam(
       answersMissing: q.answersMissing,
       html: "",
       options: undefined,
+      externalUrl: q.externalUrl ?? null,
     };
 
     if (type === "PROGRAM") {
