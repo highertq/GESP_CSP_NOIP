@@ -63,6 +63,26 @@ export default function SiteHeader() {
                 管理
               </Link>
             )}
+            {me && (
+              <>
+                <Link
+                  href="/wrong"
+                  className={`px-3 py-1.5 rounded-md transition-colors ${
+                    pathname.startsWith("/wrong") ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  错题本
+                </Link>
+                <Link
+                  href="/favorites"
+                  className={`px-3 py-1.5 rounded-md transition-colors ${
+                    pathname.startsWith("/favorites") ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  收藏
+                </Link>
+              </>
+            )}
           </nav>
         </div>
         <div className="flex items-center gap-2 text-sm">

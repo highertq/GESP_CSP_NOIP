@@ -17,9 +17,9 @@ async function main() {
   });
 
   await prisma.adminSetting.upsert({
-    where: { key: "wrong_mastery_threshold" },
+    where: { key: "wrong_master_threshold" },
     update: {},
-    create: { key: "wrong_mastery_threshold", value: "2" },
+    create: { key: "wrong_master_threshold", value: "2" },
   });
   await prisma.adminSetting.upsert({
     where: { key: "announcement" },

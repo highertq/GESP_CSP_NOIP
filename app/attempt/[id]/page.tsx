@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { prepareExam } from "@/lib/prepare-exam";
 import type { ExamItem } from "@/lib/prepare-exam";
+import FavoriteButton from "@/components/favorite-button";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -64,6 +65,14 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
   const sectionRows = bundle.items.filter(
     (i, idx) => idx === 0 || bundle.items[idx - 1].section !== i.section,
   );
+
+  // 收藏态（客观题）
+  const objectiveQids = bundle.items.filter((i) => i.type !== "PROGRAM").map((i) => i.id);
+  const favRows = await prisma.favorite.findMany({
+    where: { userId: user.id, questionId: { in: objectiveQids } },
+    select: { questionId: true },
+  });
+  const favSet = new Set(favRows.map((f) => f.questionId));
 
   return (
     <div className="space-y-5">
@@ -151,6 +160,11 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
                       {q?.answersMissing && (
                         <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-200">
                           官方暂无答案，未计分
+                        </span>
+                      )}
+                      {item.type !== "PROGRAM" && (
+                        <span className="ml-auto">
+                          <FavoriteButton questionId={item.id} initial={favSet.has(item.id)} size="sm" />
                         </span>
                       )}
                     </div>

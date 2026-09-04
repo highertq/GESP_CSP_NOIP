@@ -26,6 +26,19 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "信奥刷题站",
+            description:
+              "免费在线刷 GESP / CSP-J / CSP-S / NCT 信息学奥赛初赛真题：单选、多选、判断、填空即时判分，自动沉淀错题本，支持整卷模拟计时。",
+            inLanguage: "zh-CN",
+          }),
+        }}
+      />
       <section className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-10 text-center">
         <h1 className="text-2xl sm:text-3xl font-bold">信奥初赛真题，免费开刷</h1>
         <p className="mt-2 text-blue-100 text-sm sm:text-base">
