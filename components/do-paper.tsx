@@ -349,7 +349,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
             </div>
           </div>
 
-          <div className="w-full px-4 sm:px-8 py-6">
+          <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-6">
             {/* section 头 */}
             {item.section && (items[cur - 1]?.section !== item.section) && (
               <div className="mb-3 flex items-baseline gap-3">
