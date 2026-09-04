@@ -90,7 +90,12 @@ export default async function PaperDetailPage({
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-bold">题目预览</h2>
+        <div>
+          <p className="eyebrow mb-1.5">
+            <span className="text-ink/30">// </span>questions
+          </p>
+          <h2 className="text-xl sm:text-[22px] font-bold tracking-tight text-ink">题目预览</h2>
+        </div>
         {items.map((item, idx) => {
           const isSectionStart = idx === 0 || items[idx - 1].section !== item.section;
           return (
