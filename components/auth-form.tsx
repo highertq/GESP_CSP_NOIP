@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
@@ -12,6 +12,13 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   const [nickname, setNickname] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [next, setNext] = useState<string | null>(null);
+
+  // 支持 /auth/login?next=/paper/xxx/do 回跳
+  useEffect(() => {
+    const n = new URLSearchParams(window.location.search).get("next");
+    if (n && n.startsWith("/")) setNext(n);
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,7 +35,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
         setError(data.error || "操作失败，请重试");
         return;
       }
-      router.replace("/");
+      router.replace(next ?? "/");
       router.refresh();
     } catch {
       setError("网络异常，请重试");
@@ -96,14 +103,20 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
         {isLogin ? (
           <>
             还没有账号？{" "}
-            <Link href="/auth/register" className="text-blue-600">
+            <Link
+              href={next ? `/auth/register?next=${encodeURIComponent(next)}` : "/auth/register"}
+              className="text-blue-600"
+            >
               去注册
             </Link>
           </>
         ) : (
           <>
             已有账号？{" "}
-            <Link href="/auth/login" className="text-blue-600">
+            <Link
+              href={next ? `/auth/login?next=${encodeURIComponent(next)}` : "/auth/login"}
+              className="text-blue-600"
+            >
               去登录
             </Link>
           </>

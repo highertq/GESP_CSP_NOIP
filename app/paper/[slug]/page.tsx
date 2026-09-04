@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { categoryLabel, QTYPE_LABEL } from "@/lib/constants";
-import Markdown from "@/components/markdown";
+import { categoryLabel } from "@/lib/constants";
+import { prepareExam } from "@/lib/prepare-exam";
 
 export const revalidate = 60;
 
@@ -25,15 +25,6 @@ export async function generateMetadata({
   };
 }
 
-type QTypeKey = "CHOICE" | "MULTI_CHOICE" | "JUDGE" | "FILL" | "PROGRAM";
-const TYPE_BADGE: Record<QTypeKey, string> = {
-  CHOICE: "bg-blue-50 text-blue-700 border-blue-100",
-  MULTI_CHOICE: "bg-violet-50 text-violet-700 border-violet-100",
-  JUDGE: "bg-amber-50 text-amber-700 border-amber-100",
-  FILL: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  PROGRAM: "bg-rose-50 text-rose-700 border-rose-100",
-};
-
 export default async function PaperDetailPage({
   params,
 }: {
@@ -46,14 +37,8 @@ export default async function PaperDetailPage({
   });
   if (!paper || !paper.published) notFound();
 
-  const objectiveCount = paper.questions.filter((q) => q.type !== "PROGRAM").length;
-  const programCount = paper.questions.length - objectiveCount;
-  const bySection: { section: string | null; start: number }[] = [];
-  paper.questions.forEach((q, i) => {
-    if (i === 0 || q.section !== paper.questions[i - 1].section) {
-      bySection.push({ section: q.section, start: i });
-    }
-  });
+  const bundle = await prepareExam(paper, paper.questions);
+  const { items } = bundle;
 
   return (
     <div className="space-y-5">
@@ -77,7 +62,7 @@ export default async function PaperDetailPage({
         <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
           {[
             ["题量", `${paper.questions.length} 题`],
-            ["客观题", `${objectiveCount} 题`],
+            ["客观题", `${bundle.objectiveCount} 题`],
             ["建议时长", `${paper.timeLimit} 分钟`],
             ["卷面总分", `${paper.totalScore} 分`],
           ].map(([k, v]) => (
@@ -88,17 +73,17 @@ export default async function PaperDetailPage({
           ))}
         </div>
         {paper.desc && <p className="mt-4 text-sm text-gray-500">{paper.desc}</p>}
-        <div className="mt-5 flex flex-wrap gap-3">
-          <button
-            disabled
-            title="整卷计时模拟功能即将上线"
-            className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white opacity-60 cursor-not-allowed"
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <Link
+            href={`/paper/${paper.slug}/do`}
+            className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
           >
-            开始整卷模拟（开发中）
-          </button>
-          {programCount > 0 && (
-            <span className="self-center text-xs text-gray-400">
-              含 {programCount} 道编程大题：在线只判客观题，编程题请自行前往洛谷等 OJ 提交验证
+            开始整卷模拟
+          </Link>
+          <span className="text-xs text-gray-400">计时作答 · 交卷即时判分 · 错题自动进错题本（需登录）</span>
+          {bundle.programCount > 0 && (
+            <span className="w-full text-xs text-gray-400">
+              含 {bundle.programCount} 道编程大题：在线只判客观题，编程题请自行前往洛谷等 OJ 提交验证
             </span>
           )}
         </div>
@@ -106,33 +91,42 @@ export default async function PaperDetailPage({
 
       <section className="space-y-4">
         <h2 className="text-lg font-bold">题目预览</h2>
-        {paper.questions.map((q, i) => {
-          const isSectionStart = bySection.some((s) => s.start === i);
-          const section = bySection.find((s) => s.start === i);
-          const options = Array.isArray(q.options) ? (q.options as { key: string; text: string }[]) : [];
+        {items.map((item, idx) => {
+          const isSectionStart = idx === 0 || items[idx - 1].section !== item.section;
           return (
-            <div key={q.id} id={`q-${q.seq}`} className="bg-white border border-gray-200 rounded-xl p-5">
-              {isSectionStart && section?.section && (
+            <div key={item.id} id={`q-${item.seq}`} className="bg-white border border-gray-200 rounded-xl p-5">
+              {isSectionStart && item.section && (
                 <div className="-mt-2 mb-3 text-xs font-semibold text-blue-600 border-b border-blue-100 pb-2">
-                  {section.section}
+                  {item.section}
                 </div>
               )}
               <div className="flex items-start gap-2">
                 <span className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-sm font-semibold text-gray-600">
-                  {q.seq}
+                  {item.seq}
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-[11px] px-1.5 py-0.5 rounded border ${TYPE_BADGE[q.type as QTypeKey] ?? ""}`}>
-                      {QTYPE_LABEL[q.type] ?? q.type}
-                    </span>
-                    <span className="text-xs text-gray-300">{q.score} 分</span>
+                    <TypeBadge type={item.type} />
+                    <span className="text-xs text-gray-300">{item.score} 分</span>
                   </div>
-                  <Markdown source={q.content} />
 
-                  {options.length > 0 && (
+                  {item.codeHtml && (
+                    <details open className="mb-3 rounded-lg border border-gray-200 bg-gray-50">
+                      <summary className="cursor-pointer select-none px-3 py-1.5 text-xs font-medium text-gray-500">
+                        阅读程序代码（共 {item.seq}-{groupLastSeq(items, idx)} 题共用）
+                      </summary>
+                      <div
+                        className="px-3 pb-3 text-[13px] leading-relaxed overflow-x-auto"
+                        dangerouslySetInnerHTML={{ __html: item.codeHtml }}
+                      />
+                    </details>
+                  )}
+
+                  <div className="md-body" dangerouslySetInnerHTML={{ __html: item.html }} />
+
+                  {item.options && (
                     <div className="mt-3 space-y-2">
-                      {options.map((o) => (
+                      {item.options.map((o) => (
                         <div
                           key={o.key}
                           className="flex items-start gap-2.5 rounded-lg border border-gray-100 px-3 py-2"
@@ -140,15 +134,13 @@ export default async function PaperDetailPage({
                           <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-700">
                             {o.key}
                           </span>
-                          <div className="flex-1 min-w-0">
-                            <Markdown source={o.text} />
-                          </div>
+                          <div className="flex-1 min-w-0 md-body" dangerouslySetInnerHTML={{ __html: o.html }} />
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {q.type === "PROGRAM" && (
+                  {item.type === "PROGRAM" && (
                     <div className="mt-3 rounded-lg bg-rose-50 border border-rose-100 px-4 py-2.5 text-xs text-rose-600">
                       本题为编程大题：请复制题面到洛谷 / GESP OJ 等平台编写并提交代码（本站不判分）
                     </div>
@@ -161,4 +153,24 @@ export default async function PaperDetailPage({
       </section>
     </div>
   );
+}
+
+/** 同一段共享代码覆盖到的最后一题 seq（用于折叠提示文案） */
+function groupLastSeq(items: { seq: number; codeHtml?: string }[], idx: number): number {
+  for (let i = idx + 1; i < items.length; i++) {
+    if (items[i].codeHtml) return items[i - 1].seq;
+  }
+  return items[items.length - 1].seq;
+}
+
+function TypeBadge({ type }: { type: string }) {
+  const map: Record<string, [string, string]> = {
+    CHOICE: ["单选题", "bg-blue-50 text-blue-700 border-blue-100"],
+    MULTI_CHOICE: ["多选题", "bg-violet-50 text-violet-700 border-violet-100"],
+    JUDGE: ["判断题", "bg-amber-50 text-amber-700 border-amber-100"],
+    FILL: ["填空题", "bg-emerald-50 text-emerald-700 border-emerald-100"],
+    PROGRAM: ["编程题", "bg-rose-50 text-rose-700 border-rose-100"],
+  };
+  const [label, cls] = map[type] ?? ["未知", "bg-gray-100 text-gray-600 border-gray-200"];
+  return <span className={`text-[11px] px-1.5 py-0.5 rounded border ${cls}`}>{label}</span>;
 }
