@@ -31,7 +31,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       </main>
       <footer className="border-t border-line bg-surface mt-6">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-          <div className="grid gap-8 sm:grid-cols-[1.4fr_1fr_1fr]">
+          <div className="grid gap-8 sm:grid-cols-[1.4fr_1fr_1fr_1fr]">
             <div className="space-y-3">
               <div className="flex items-center gap-2.5">
                 <FooterLogo />
@@ -53,6 +53,16 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 <li>
                   <Link href="/me" className="hover:text-ink transition-colors">个人统计</Link>
                 </li>
+              </ul>
+            </div>
+            <div>
+              <p className="eyebrow mb-3">GESP 考级</p>
+              <ul className="space-y-2 text-[13px] text-ink-2">
+                <li><Link href="/gesp" className="hover:text-ink transition-colors">GESP 真题专区</Link></li>
+                <li><Link href="/gesp/level-1" className="hover:text-ink transition-colors">GESP 一级真题</Link></li>
+                <li><Link href="/gesp/level-4" className="hover:text-ink transition-colors">GESP 四级真题</Link></li>
+                <li><Link href="/guides" className="hover:text-ink transition-colors">备考指南</Link></li>
+                <li><Link href="/guides/gesp-baoming-guanwang" className="hover:text-ink transition-colors">GESP 报名入口</Link></li>
               </ul>
             </div>
             <div>

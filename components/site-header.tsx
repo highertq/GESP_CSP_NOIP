@@ -73,6 +73,8 @@ export default function SiteHeader() {
       label: "试卷库",
       active: pathname.startsWith("/papers") || pathname.startsWith("/paper/"),
     },
+    { href: "/gesp", label: "GESP 真题", active: pathname.startsWith("/gesp") },
+    { href: "/guides", label: "备考指南", active: pathname.startsWith("/guides") },
   ];
   if (me) {
     navItems.push(

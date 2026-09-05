@@ -20,9 +20,17 @@ export async function generateMetadata({
   });
   if (!paper || !paper.published) return { title: "试卷不存在" };
   const cat = categoryLabel(paper.category);
+  const levelText = paper.level ? `${paper.level}级` : "";
+  const fullTitle = `${paper.title}真题在线练习 - ${cat}${levelText}`;
   return {
-    title: `${paper.title} - ${cat}${paper.level ? ` ${paper.level}级` : ""}信奥真题在线练习`,
-    description: `${paper.title}（${paper.examDate ?? ""}）真题在线刷题：选择/判断/填空即时判分，附答案与错题本，信奥初赛备考练习。`,
+    title: fullTitle,
+    description: `${paper.title}（${paper.examDate ?? ""}）${cat}${levelText}真题在线刷题：选择/判断/填空即时判分，附答案解析与错题本，免费整卷模拟，GESP/CSP 初赛备考首选。`,
+    alternates: { canonical: `/paper/${slug}` },
+    openGraph: {
+      title: fullTitle,
+      description: `${cat}${levelText}真题在线练习，即时判分，免费刷题。`,
+      type: "article",
+    },
   };
 }
 

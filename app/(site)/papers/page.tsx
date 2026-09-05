@@ -4,7 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { CATEGORY_META, categoryLabel } from "@/lib/constants";
 import PaperCard from "@/components/paper-card";
 
-export const metadata: Metadata = { title: "试卷库" };
+export const metadata: Metadata = {
+  title: "GESP真题试卷库 - 历年初赛真题免费在线刷",
+  description:
+    "GESP 1-8 级、CSP-J/S、NCT 历年初赛真题试卷库，共 160+ 套免费在线练习：选择/判断/填空即时判分，错题自动归档，支持整卷模拟计时。按考试类型与级别筛选。",
+  alternates: { canonical: "/papers" },
+};
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 20;

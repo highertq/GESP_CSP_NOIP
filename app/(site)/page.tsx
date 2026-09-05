@@ -14,6 +14,33 @@ const CAT_DESC: Record<string, string> = {
   OTHER: "其他赛事真题精选",
 };
 
+const HOME_FAQS = [
+  {
+    q: "GESP 是什么考试？",
+    a: "GESP（编程能力等级认证）是由中国计算机学会 CCF 主办的编程等级考试，覆盖图形化 Scratch 和 C++ 两个方向，共 1-8 级，每年 3/6/9/12 月左右各举办一次。证书可作为青少年编程能力的权威证明，高等级（8 级）通过后还可衔接 CSP-J/S 初赛。",
+  },
+  {
+    q: "GESP 一共几级？考什么内容？",
+    a: "GESP C++ 方向共 8 级：1-4 级侧重基础语法、循环、数组、函数和简单算法；5-8 级递进考察数据结构（链表、树、图）与算法（排序、搜索、动态规划）。本站收录 GESP 1-8 级历年初赛真题，可在线整卷模拟。",
+  },
+  {
+    q: "GESP 编程考级有用吗？含金量如何？",
+    a: "GESP 是 CCF 官方认证，与 CSP-J/S、NOI 同属一个体系，是目前国内认可度最高的青少年编程等级考试之一。等级证书可用于综合素质评价、科技特长生材料，8 级证书可直通 CSP-J/S 初赛，对升学和竞赛路径都有实际价值。",
+  },
+  {
+    q: "这里能刷什么题？",
+    a: "信奥初赛的客观题（单选 / 多选 / 判断 / 填空），覆盖 GESP 1-8 级历年真题、CSP-J/S 初赛试题等。提交后即时判分，答错的题会自动进你的错题本。",
+  },
+  {
+    q: "编程大题怎么练？",
+    a: "客观题适合网站在线判分。GESP 真题的编程大题提供「洛谷原题」直达链接，可跳转官方真题在线提交验证；模拟卷自编编程题本站只展示题面。",
+  },
+  {
+    q: "需要登录吗？",
+    a: "游客可以直接刷题体验；注册登录后，答题记录、错题本、收藏才会保存并同步。",
+  },
+];
+
 function SectionHead({
   eyebrow,
   title,
@@ -75,9 +102,25 @@ export default async function HomePage() {
             "@context": "https://schema.org",
             "@type": "WebSite",
             name: "曲奇编程",
+            alternateName: "GESP真题在线练习",
+            url: process.env.NEXT_PUBLIC_SITE_URL || "https://qu7.top",
             description:
-              "免费在线刷 GESP / CSP-J / CSP-S / NCT 信息学奥赛初赛真题：单选、多选、判断、填空即时判分，自动沉淀错题本，支持整卷模拟计时。",
+              "免费在线刷 GESP 1-8 级 / CSP-J / CSP-S / NCT 历年真题：即时判分、错题本、整卷模拟，附 GESP 考级备考指南。",
             inLanguage: "zh-CN",
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: HOME_FAQS.map((f) => ({
+              "@type": "Question",
+              name: f.q,
+              acceptedAnswer: { "@type": "Answer", text: f.a },
+            })),
           }),
         }}
       />
@@ -87,11 +130,16 @@ export default async function HomePage() {
         <div className="hero-grid absolute inset-0 pointer-events-none" aria-hidden="true" />
         <div className="relative pt-10 sm:pt-14 pb-12 sm:pb-16 grid lg:grid-cols-[1.12fr_0.88fr] gap-10 lg:gap-14 items-center">
           <div className="fade-up">
-            <h1 className="text-[3.4rem] sm:text-[5.2rem] leading-[1] font-extrabold tracking-[-0.045em] text-ink">
-              曲径通优
+            <h1 className="text-ink">
+              <span className="block text-[3.4rem] sm:text-[5.2rem] leading-[1] font-extrabold tracking-[-0.045em]">
+                曲径通优
+              </span>
+              <span className="block mt-3 text-lg sm:text-2xl font-bold tracking-tight text-ink-2">
+                GESP 真题在线练习 · 免费刷题平台
+              </span>
             </h1>
             <p className="mt-5 max-w-lg text-[15.5px] sm:text-base leading-relaxed text-ink-2">
-              GESP / CSP-J / CSP-S / NCT 历年初赛真题在线练习，即时判分 + 错题沉淀 + 整卷模拟计时。
+              GESP 1-8 级 / CSP-J / CSP-S / NCT 历年初赛真题在线练习，即时判分 + 错题沉淀 + 整卷模拟计时。
             </p>
             <div className="mt-8">
               <Link href="/papers" className="btn btn-primary btn-lg">
@@ -219,20 +267,7 @@ export default async function HomePage() {
       <section className="max-w-3xl">
         <SectionHead eyebrow="faq" title="常见问题" />
         <div className="divide-y divide-line">
-          {[
-            {
-              q: "这里能刷什么题？",
-              a: "信奥初赛的客观题（单选 / 多选 / 判断 / 填空），覆盖 GESP 1-8 级历年真题、CSP-J/S 初赛试题等。提交后即时判分，答错的题会自动进你的错题本。",
-            },
-            {
-              q: "编程大题怎么练？",
-              a: "客观题适合网站在线判分。GESP 真题的编程大题提供「洛谷原题」直达链接，可跳转官方真题在线提交验证；模拟卷自编编程题本站只展示题面。",
-            },
-            {
-              q: "需要登录吗？",
-              a: "游客可以直接刷题体验；注册登录后，答题记录、错题本、收藏才会保存并同步。",
-            },
-          ].map((f, i) => (
+          {HOME_FAQS.map((f, i) => (
             <div key={f.q} className="py-4 grid grid-cols-[2.5rem_1fr] gap-3">
               <span className="code text-xs text-ink-4 pt-1">Q{i + 1}</span>
               <div>
@@ -240,6 +275,29 @@ export default async function HomePage() {
                 <p className="mt-1.5 text-sm leading-relaxed text-ink-2">{f.a}</p>
               </div>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ============ 备考导航（内链区） ============ */}
+      <section className="max-w-3xl">
+        <SectionHead eyebrow="sitemap" title="GESP 备考导航" />
+        <div className="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-[13.5px]">
+          {[
+            { href: "/gesp", text: "GESP 真题专区（1-8 级全收录）" },
+            { href: "/papers?cat=GESP", text: "GESP 历年真题试卷库" },
+            { href: "/gesp/level-1", text: "GESP 一级真题在线练习" },
+            { href: "/gesp/level-4", text: "GESP 四级真题在线练习" },
+            { href: "/guides/gesp-shi-shenme-kaoshi", text: "GESP 是什么考试？全面解读" },
+            { href: "/guides/gesp-baoming-guanwang", text: "GESP 报名官网入口与流程" },
+            { href: "/guides/gesp-kaoshi-shijian", text: "GESP 考试时间安排（全年）" },
+            { href: "/guides/gesp-yigong-ji-ji", text: "GESP 一共几级？级别怎么选" },
+            { href: "/guides/gesp-hanjinliang", text: "GESP 编程考级的含金量" },
+            { href: "/guides/gesp-kuaisu-paixu", text: "GESP 快速排序考点精讲" },
+          ].map((l) => (
+            <Link key={l.href} href={l.href} className="py-1 text-ink-2 hover:text-ink transition-colors">
+              · {l.text}
+            </Link>
           ))}
         </div>
       </section>
