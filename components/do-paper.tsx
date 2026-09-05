@@ -196,7 +196,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      {/* 顶部计时条 */}
+      {/* 顶部条（精简：退出 + 卷名 + 交卷；其他信息全部下放右侧面板） */}
       <header className="h-14 shrink-0 border-b border-line bg-surface/95 backdrop-blur flex items-center gap-2 sm:gap-3 px-3 sm:px-4">
         <button
           onClick={() => setLeaveOpen(true)}
@@ -209,59 +209,16 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
           </svg>
           <span className="hidden sm:inline">退出</span>
         </button>
-        <div className="min-w-0 flex-1 flex items-center gap-2 sm:gap-3">
-          <h1 className="font-semibold text-[13.5px] sm:text-sm text-ink truncate">{bundle.title}</h1>
-          <span className="hidden md:inline text-xs text-ink-4">
-            第 {item.seq} 题 / 共 {items.length} 题
-          </span>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <span className="hidden sm:inline text-xs text-ink-3 tabular-nums">
-            已答 <b className="text-ink">{answeredCount}</b>/{totalObjective}
-          </span>
-          {/* 切题组（顶部操作，常驻可见） */}
-          <div className="flex items-center gap-1 sm:gap-1.5 ml-1 sm:ml-2 pl-2 sm:pl-3 border-l border-line">
-            <button
-              onClick={goPrev}
-              disabled={cur === 0}
-              title="上一题 (←)"
-              aria-label="上一题"
-              className="grid place-items-center w-8 h-8 rounded-lg border border-line bg-surface text-ink-2 hover:border-ink/60 hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-            </button>
-            <span className="font-mono text-[11.5px] text-ink-3 tabular-nums min-w-[3.4rem] text-center">
-              {cur + 1} / {items.length}
-            </span>
-            <button
-              onClick={goNext}
-              disabled={cur === items.length - 1}
-              title={cur === items.length - 1 ? "已是最后一题" : "下一题 (→)"}
-              aria-label="下一题"
-              className="grid place-items-center w-8 h-8 rounded-lg border border-line bg-surface text-ink-2 hover:border-ink/60 hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="m9 18 6-6-6-6" />
-              </svg>
-            </button>
-          </div>
-          <span
-            className={`font-mono text-base sm:text-lg font-bold tabular-nums ${
-              remainingMs < 5 * 60_000 ? "text-err animate-pulse" : "text-ink"
-            }`}
-          >
-            {timeText}
-          </span>
-          <button
-            onClick={() => setConfirmOpen(true)}
-            disabled={submitting}
-            className="btn btn-primary !py-1.5 text-[13px]"
-          >
-            {submitting ? "判分中…" : "交卷"}
-          </button>
-        </div>
+        <h1 className="font-semibold text-[13.5px] sm:text-sm text-ink truncate flex-1 min-w-0">
+          {bundle.title}
+        </h1>
+        <button
+          onClick={() => setConfirmOpen(true)}
+          disabled={submitting}
+          className="btn btn-primary !py-1.5 text-[13px] shrink-0"
+        >
+          {submitting ? "判分中…" : "交卷"}
+        </button>
       </header>
 
       {/* 主体：左答题卡 + 右单题 */}
@@ -349,7 +306,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
             </div>
           </div>
 
-          <div className="w-full max-w-3xl pl-3 sm:pl-4 pr-4 sm:pr-8 py-6">
+          <div className="mx-auto w-full max-w-3xl px-6 sm:px-8 py-6">
             {/* section 头 */}
             {item.section && (items[cur - 1]?.section !== item.section) && (
               <div className="mb-3 flex items-baseline gap-3">
@@ -426,6 +383,19 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
 
             </div>
         </div>
+        {/* 右侧：本卷面板（填满中间空白 + 把切题做成显眼大按钮） */}
+        <SidePanel
+          remainingMs={remainingMs}
+          timeText={timeText}
+          answeredCount={answeredCount}
+          totalObjective={totalObjective}
+          flaggedCount={items.filter((i) => flagged[i.id]).length}
+          cur={cur}
+          itemsLength={items.length}
+          goPrev={goPrev}
+          goNext={goNext}
+          onSubmit={() => setConfirmOpen(true)}
+        />
       </div>
 
       {/* 交卷确认 */}
@@ -483,6 +453,117 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
         </div>
       )}
     </div>
+  );
+}
+
+/** 右侧本卷面板：填满中间空白 + 把切题做成显眼大按钮 */
+function SidePanel({
+  remainingMs,
+  timeText,
+  answeredCount,
+  totalObjective,
+  flaggedCount,
+  cur,
+  itemsLength,
+  goPrev,
+  goNext,
+  onSubmit,
+}: {
+  remainingMs: number;
+  timeText: string;
+  answeredCount: number;
+  totalObjective: number;
+  flaggedCount: number;
+  cur: number;
+  itemsLength: number;
+  goPrev: () => void;
+  goNext: () => void;
+  onSubmit: () => void;
+}) {
+  const progressPct = totalObjective === 0 ? 0 : Math.round((answeredCount / totalObjective) * 100);
+  const urgent = remainingMs < 5 * 60_000;
+  const isLast = cur === itemsLength - 1;
+  return (
+    <aside className="hidden lg:flex w-72 shrink-0 border-l border-line bg-surface/60 flex-col">
+      {/* 倒计时大字 */}
+      <div className="px-5 pt-6 pb-5">
+        <p className="eyebrow mb-3 text-center">剩余时间</p>
+        <div
+          className={`text-center font-mono text-[44px] leading-none font-bold tabular-nums tracking-tight ${
+            urgent ? "text-err animate-pulse" : "text-ink"
+          }`}
+        >
+          {timeText}
+        </div>
+        {urgent && (
+          <p className="mt-2 text-center text-[11px] text-err">5 分钟内到时，请尽快交卷</p>
+        )}
+      </div>
+
+      <div className="border-t border-line" />
+
+      {/* 答题进度 */}
+      <div className="px-5 py-4">
+        <p className="eyebrow mb-3">答题进度</p>
+        <div className="flex items-baseline gap-1.5">
+          <span className="num text-[34px] font-bold text-ink leading-none">{answeredCount}</span>
+          <span className="text-sm text-ink-3">/ {totalObjective} 题</span>
+          <span className="ml-auto text-xs text-ink-3 tabular-nums">{progressPct}%</span>
+        </div>
+        <div className="mt-3 h-1.5 rounded-full bg-surface-2 overflow-hidden">
+          <div
+            className="h-full bg-ink transition-all duration-300"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+        {flaggedCount > 0 && (
+          <p className="mt-3 text-[12px] text-ink-3">
+            ★ 已标记 <b className="num text-ink">{flaggedCount}</b> 题
+          </p>
+        )}
+      </div>
+
+      <div className="border-t border-line" />
+
+      {/* 快捷键 */}
+      <div className="px-5 py-4">
+        <p className="eyebrow mb-3">快捷键</p>
+        <ul className="space-y-1.5 text-[12.5px] text-ink-2">
+          <li className="flex items-center justify-between">
+            <span>上一题</span>
+            <kbd className="px-1.5 py-0.5 rounded border border-line bg-surface font-mono text-[11px] text-ink-3">←</kbd>
+          </li>
+          <li className="flex items-center justify-between">
+            <span>下一题</span>
+            <kbd className="px-1.5 py-0.5 rounded border border-line bg-surface font-mono text-[11px] text-ink-3">→</kbd>
+          </li>
+          <li className="flex items-center justify-between">
+            <span>标记题目</span>
+            <kbd className="px-1.5 py-0.5 rounded border border-line bg-surface font-mono text-[11px] text-ink-3">M</kbd>
+          </li>
+        </ul>
+      </div>
+
+      {/* 切题大按钮组：贴底，作为主操作入口 */}
+      <div className="mt-auto border-t border-line p-4 space-y-2.5">
+        <button
+          onClick={goPrev}
+          disabled={cur === 0}
+          className="w-full flex items-center justify-center gap-2 rounded-lg border border-line bg-surface py-2.5 text-[13.5px] font-semibold text-ink-2 hover:border-ink/60 hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          ← 上一题
+        </button>
+        <button
+          onClick={isLast ? onSubmit : goNext}
+          className="w-full flex items-center justify-center gap-2 rounded-lg bg-ink py-2.5 text-[13.5px] font-semibold text-white hover:opacity-85 transition-opacity"
+        >
+          {isLast ? "完成交卷" : "下一题 →"}
+        </button>
+        <p className="text-center text-[11px] text-ink-4 pt-1">
+          第 {cur + 1} / {itemsLength} 题
+        </p>
+      </div>
+    </aside>
   );
 }
 
