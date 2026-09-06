@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import "katex/dist/katex.min.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://qu7.top"),
@@ -41,6 +40,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN">
+      <head>
+        <link rel="stylesheet" href="/katex.min.css" />
+      </head>
       <body className="min-h-screen flex flex-col bg-canvas text-ink antialiased">
         {children}
       </body>
