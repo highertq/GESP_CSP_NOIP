@@ -10,7 +10,6 @@ const STORE_KEY = (paperId: string) => `oj-do:${paperId}`;
 type SavedState = {
   answers: Record<string, string>;
   flagged: Record<string, boolean>;
-  deadline: number;
   cur?: number; // 上次聚焦题
 };
 
@@ -19,7 +18,7 @@ function loadSaved(paperId: string): SavedState | null {
     const raw = localStorage.getItem(STORE_KEY(paperId));
     if (!raw) return null;
     const s = JSON.parse(raw) as SavedState;
-    if (!s.answers || typeof s.deadline !== "number") return null;
+    if (!s.answers) return null;
     return s;
   } catch {
     return null;
@@ -28,13 +27,17 @@ function loadSaved(paperId: string): SavedState | null {
 
 export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
   const router = useRouter();
-  const { items, timeLimit } = bundle;
+  const { items } = bundle;
   const objectiveItems = useMemo(() => items.filter((i) => i.type !== "PROGRAM"), [items]);
 
   const [cur, setCur] = useState<number>(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [flagged, setFlagged] = useState<Record<string, boolean>>({});
-  const [deadline, setDeadline] = useState<number>(() => Date.now() + timeLimit * 60_000);
+  // P0-5/6：倒计时以服务端 deadlineAt 为准，本地只缓存时钟偏移
+  const [serverDeadline, setServerDeadline] = useState<number>(0);
+  const [clockOffset, setClockOffset] = useState<number>(0);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
+  const [started, setStarted] = useState(false);
   const [now, setNow] = useState<number>(Date.now());
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
@@ -43,22 +46,19 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
   const [mounted, setMounted] = useState(false);
   const doneRef = useRef(false);
   const answersRef = useRef(answers);
-  const deadlineRef = useRef(deadline);
+  const attemptIdRef = useRef<string | null>(null);
   const mainRef = useRef<HTMLDivElement | null>(null);
   answersRef.current = answers;
-  deadlineRef.current = deadline;
+  attemptIdRef.current = attemptId;
 
   // 进入加载态：短暂骨架后进入，避免本地续答恢复前闪烁
   useEffect(() => {
     const saved = loadSaved(bundle.paperId);
     if (saved) {
-      if (saved.deadline > Date.now()) {
-        setAnswers(saved.answers);
-        setFlagged(saved.flagged);
-        setDeadline(saved.deadline);
-        if (typeof saved.cur === "number" && saved.cur >= 0 && saved.cur < items.length) {
-          setCur(saved.cur);
-        }
+      setAnswers(saved.answers);
+      setFlagged(saved.flagged);
+      if (typeof saved.cur === "number" && saved.cur >= 0 && saved.cur < items.length) {
+        setCur(saved.cur);
       }
     }
     const t = setTimeout(() => setMounted(true), 120);
@@ -66,20 +66,59 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 状态持久化（断线续答）
+  // 开考：优先续答已有的未超时 STARTED 记录；否则新建一条。拿到服务端 deadlineAt + 时钟基准。
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const activeRes = await fetch(
+          `/api/attempts/active?paperId=${encodeURIComponent(bundle.paperId)}`,
+          { cache: "no-store" },
+        );
+        const activeData = activeRes.ok ? (await activeRes.json()).data : null;
+        let info = activeData && activeData.attemptId ? activeData : null;
+        if (!info) {
+          const startRes = await fetch("/api/attempts/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paperId: bundle.paperId }),
+          });
+          const startData = startRes.ok ? (await startRes.json()).data : null;
+          info = startData && startData.attemptId ? startData : null;
+        }
+        if (cancelled) return;
+        if (info?.attemptId) {
+          attemptIdRef.current = info.attemptId;
+          setAttemptId(info.attemptId);
+          setServerDeadline(new Date(info.deadlineAt).getTime());
+          setClockOffset(new Date(info.serverNow).getTime() - Date.now());
+          setStarted(true);
+        } else {
+          setError("开考初始化失败，请刷新页面重试");
+        }
+      } catch {
+        if (!cancelled) setError("网络异常，开考失败，请刷新页面重试");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [bundle.paperId]);
+
+  // 状态持久化（断线续答：只缓存答案与标记，倒计时以服务端为准）
   useEffect(() => {
     const t = setTimeout(() => {
       try {
         localStorage.setItem(
           STORE_KEY(bundle.paperId),
-          JSON.stringify({ answers, flagged, deadline, cur } satisfies SavedState),
+          JSON.stringify({ answers, flagged, cur } satisfies SavedState),
         );
       } catch {
         /* 隐私模式等场景忽略 */
       }
     }, 300);
     return () => clearTimeout(t);
-  }, [answers, flagged, deadline, cur, bundle.paperId]);
+  }, [answers, flagged, cur, bundle.paperId]);
 
   // 倒计时
   useEffect(() => {
@@ -95,7 +134,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
   // 键盘快捷键（做题页全屏聚焦体验）
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (confirmOpen || leaveOpen || submitting) return;
+      if (confirmOpen || leaveOpen || submitting || !started) return;
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if (e.key === "ArrowLeft" && cur > 0) {
@@ -113,9 +152,9 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [cur, items, confirmOpen, leaveOpen, submitting]);
+  }, [cur, items, confirmOpen, leaveOpen, submitting, started]);
 
-  const remainingMs = Math.max(0, deadline - now);
+  const remainingMs = Math.max(0, serverDeadline - (now + clockOffset));
   const mm = Math.floor(remainingMs / 60_000);
   const ss = Math.floor((remainingMs % 60_000) / 1000);
   const timeText = `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
@@ -124,12 +163,15 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
   const submit = useCallback(
     async (auto: boolean) => {
       if (doneRef.current) return;
+      if (!attemptIdRef.current) {
+        setError("尚未开考，请刷新页面");
+        return;
+      }
       doneRef.current = true;
       setSubmitting(true);
       setError("");
       const payload = {
-        paperId: bundle.paperId,
-        durationSec: Math.max(0, Math.round((timeLimit * 60_000 - remainingMs) / 1000)),
+        attemptId: attemptIdRef.current,
         answers: answersRef.current,
       };
       try {
@@ -145,6 +187,12 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
             router.replace(`/auth/login?next=/paper/${bundle.paperSlug}/do`);
             return;
           }
+          if (res.status === 409) {
+            // 已结束 / 已超时：清理本地进度并回试卷页
+            localStorage.removeItem(STORE_KEY(bundle.paperId));
+            router.replace(`/paper/${bundle.paperSlug}`);
+            return;
+          }
           doneRef.current = false;
           setSubmitting(false);
           setError(data.error || "交卷失败，请重试");
@@ -158,15 +206,15 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
         setError(auto ? "自动交卷失败，请检查网络后手动交卷" : "网络异常，交卷失败，请重试");
       }
     },
-    [bundle.paperId, bundle.paperSlug, remainingMs, router, timeLimit],
+    [bundle.paperSlug, router],
   );
 
-  // 到时自动交卷
+  // 到时自动交卷（未开考不触发）
   useEffect(() => {
-    if (remainingMs <= 0 && !doneRef.current) {
+    if (started && remainingMs <= 0 && !doneRef.current) {
       submit(true);
     }
-  }, [remainingMs, submit]);
+  }, [remainingMs, started, submit]);
 
   const goPrev = () => setCur((c) => Math.max(0, c - 1));
   const goNext = () => setCur((c) => Math.min(items.length - 1, c + 1));
@@ -186,6 +234,34 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
               <div className="h-24 w-full rounded bg-surface-2/70" />
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 开考初始化中
+  if (!started && !error) {
+    return (
+      <div className="flex-1 min-h-0 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-ink-3">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+          </svg>
+          <p className="text-sm">正在进入考试…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 开考失败
+  if (error && !started) {
+    return (
+      <div className="flex-1 min-h-0 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-center px-6">
+          <p className="text-sm text-err">{error}</p>
+          <button onClick={() => location.reload()} className="btn btn-primary">
+            刷新重试
+          </button>
         </div>
       </div>
     );

@@ -4,21 +4,19 @@ import { getCurrentUser } from "@/lib/auth";
 import { jsonOk, jsonFail } from "@/lib/api";
 import { gradeQuestion } from "@/lib/grade";
 import { applyMasteryOnWrong, MASTERY_SOURCE } from "@/lib/mastery";
+import { isBlocked, hit, RULE_SUBMIT_USER } from "@/lib/ratelimit";
 import { z } from "zod";
 
-// 整卷提交判分（需登录）
-// 语义：
-//  - PROGRAM 与答案缺失题：不判分、不计入得分/错题（correct=null 不落 AttemptAnswer）
-//  - 客观题：逐题判分，全部落 AttemptAnswer（含未作答 correct=false）
-//  - 答错（含未答？不含）→ WrongQuestion upsert：仅"作答且错"进错题本，未作答不污染
-//  - 每题答对/答错均写 AnswerLog（供统计/掌握判定）
-
+// 整卷提交判分（需登录）。
+// 语义（P0-5/6 改造后）：
+//  - 必须携带 attemptId（开考时由 /api/attempts/start 生成），只改得动自己的 STARTED 记录 → 天然幂等 + 防重放
+//  - durationSec 由服务端按 startedAt 计算，前端不可伪造（封顶 timeLimit*60+30s grace）
+//  - now > deadlineAt → 置 ABANDONED 并返回 409「已超时，本次作废」
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const bodySchema = z.object({
-  paperId: z.string().min(1),
-  durationSec: z.number().int().min(0).max(6 * 3600).optional(),
+  attemptId: z.string().min(1),
   answers: z.record(z.string(), z.string().nullable()),
 });
 
@@ -34,16 +32,34 @@ export async function POST(req: NextRequest) {
   }
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return jsonFail("参数不合法：" + parsed.error.issues[0].message);
-  const { paperId, durationSec, answers } = parsed.data;
+  const { attemptId, answers } = parsed.data;
+
+  const attempt = await prisma.paperAttempt.findUnique({
+    where: { id: attemptId },
+    select: { id: true, userId: true, paperId: true, status: true, startedAt: true, deadlineAt: true },
+  });
+  if (!attempt || attempt.userId !== user.id) return jsonFail("作答记录不存在", 404);
+  if (attempt.status !== "STARTED") return jsonFail("本次作答已结束", 409);
+
+  const now = new Date();
+  // 服务端截止时间：以 Date 归一化（兼顾 Date 与字符串两种返回形态），避免比较失效
+  const dlMs = attempt.deadlineAt ? new Date(attempt.deadlineAt).getTime() : 0;
+  if (dlMs > 0 && now.getTime() > dlMs) {
+    await prisma.paperAttempt.update({
+      where: { id: attempt.id },
+      data: { status: "ABANDONED", submittedAt: now },
+    });
+    return jsonFail("已超时，本次作废", 409);
+  }
 
   const paper = await prisma.paper.findUnique({
-    where: { id: paperId },
-    select: { id: true, title: true, slug: true, published: true },
+    where: { id: attempt.paperId },
+    select: { id: true, title: true, slug: true, published: true, timeLimit: true },
   });
   if (!paper || !paper.published) return jsonFail("试卷不存在或已下线", 404);
 
   const questions = await prisma.question.findMany({
-    where: { paperId },
+    where: { paperId: attempt.paperId },
     orderBy: { seq: "asc" },
     select: { id: true, seq: true, type: true, score: true, answer: true, answersMissing: true },
   });
@@ -98,18 +114,23 @@ export async function POST(req: NextRequest) {
 
   if (answerRows.length === 0) return jsonFail("本卷没有可判分的客观题");
 
+  // 提交频控（同一用户 60s 内最多 5 次交卷）
+  if (isBlocked(`submit:u:${user.id}`, RULE_SUBMIT_USER)) {
+    return jsonFail("交卷过于频繁，请稍后再试", 429);
+  }
+
+  // durationSec：服务端按 startedAt 计算，封顶 timeLimit*60 + 30s grace（前端不可伪造）
+  const grace = paper.timeLimit * 60 + 30;
+  const elapsed = Math.floor((now.getTime() - attempt.startedAt.getTime()) / 1000);
+  const durationSec = Math.min(elapsed, grace);
+
   const result = await prisma.$transaction(async (tx) => {
-    const attempt = await tx.paperAttempt.create({
-      data: {
-        userId: user.id,
-        paperId,
-        status: "SUBMITTED",
-        submittedAt: new Date(),
-        durationSec: durationSec ?? null,
-        earnedScore,
-      },
-      select: { id: true },
+    // 幂等 + 防重放：只改得动自己的 STARTED 记录；已被提交/超时则 count=0
+    const upd = await tx.paperAttempt.updateMany({
+      where: { id: attempt.id, userId: user.id, status: "STARTED" },
+      data: { status: "SUBMITTED", submittedAt: now, durationSec, earnedScore },
     });
+    if (upd.count === 0) return null;
     if (answerRows.length > 0) {
       await tx.attemptAnswer.createMany({
         data: answerRows.map((a) => ({ ...a, attemptId: attempt.id })),
@@ -118,12 +139,15 @@ export async function POST(req: NextRequest) {
     if (logRows.length > 0) {
       await tx.answerLog.createMany({ data: logRows });
     }
-    // 答错 → 错题本 +1 且清空 masteredAt（已掌握的题答错也退回未掌握，P0-3/4 与重练路径一致）
+    // 答错 → 错题本 +1 且清空 masteredAt（与重练路径一致）
     for (const qid of wrongQuestionIds) {
-      await applyMasteryOnWrong({ userId: user.id, questionId: qid, now: new Date(), tx });
+      await applyMasteryOnWrong({ userId: user.id, questionId: qid, now, tx });
     }
     return attempt.id;
   });
+
+  if (!result) return jsonFail("本次作答已结束", 409);
+  hit(`submit:u:${user.id}`, RULE_SUBMIT_USER);
 
   const percent = maxScore > 0 ? Math.round((earnedScore / maxScore) * 100) : 0;
   return jsonOk({

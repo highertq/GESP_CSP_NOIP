@@ -17,6 +17,8 @@ export const RULE_LOGIN_TARGET: Rule = { windowMs: 10 * 60 * 1000, max: 8 };
 export const RULE_REGISTER_IP: Rule = { windowMs: 60 * 60 * 1000, max: 10 };
 /** 同一 IP 的错题重练提交数（防刷 AnswerLog 污染统计 / 接口滥用） */
 export const RULE_PRACTICE_IP: Rule = { windowMs: 60 * 1000, max: 30 };
+/** 同一用户的整卷交卷数（防刷提交 / 接口滥用，保护成绩表与 AnswerLog） */
+export const RULE_SUBMIT_USER: Rule = { windowMs: 60 * 1000, max: 5 };
 
 const buckets = new Map<string, number[]>();
 
