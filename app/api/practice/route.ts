@@ -3,11 +3,18 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { jsonOk, jsonFail } from "@/lib/api";
 import { gradeQuestion } from "@/lib/grade";
+import { clientIp, isBlocked, hit, RULE_PRACTICE_IP } from "@/lib/ratelimit";
+import {
+  getThreshold,
+  applyMasteryOnWrong,
+  applyMasteryOnPracticeCorrect,
+  MASTERY_SOURCE,
+} from "@/lib/mastery";
 import { z } from "zod";
 
 // 错题单题重练：即时判分 + 错题掌握流转。
 // 掌握规则：连续答对达到阈值 N（AdminSetting wrong_master_threshold，默认 2）→ WrongQuestion.masteredAt 置值。
-// 判定用最近 N 条 AnswerLog 是否全对（含本次），不新增字段。
+// 判定只取最近 N 条 PRACTICE 来源日志（applyMasteryOnPracticeCorrect 内实现），整卷答对不污染。
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -17,15 +24,16 @@ const bodySchema = z.object({
   given: z.string().nullable().optional(),
 });
 
-async function getThreshold(): Promise<number> {
-  const setting = await prisma.adminSetting.findUnique({ where: { key: "wrong_master_threshold" } });
-  const n = Number(setting?.value ?? 2);
-  return Number.isInteger(n) && n >= 1 && n <= 10 ? n : 2;
-}
-
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return jsonFail("请先登录", 401);
+
+  // P0-8 重练频控：每 IP 每分钟最多 30 次，防刷 AnswerLog 污染统计 / 接口滥用
+  const ip = clientIp(req.headers);
+  const ipKey = `practice:ip:${ip}`;
+  if (isBlocked(ipKey, RULE_PRACTICE_IP)) {
+    return jsonFail("操作过于频繁，请稍后再试", 429);
+  }
 
   let body: unknown;
   try {
@@ -40,10 +48,7 @@ export async function POST(req: NextRequest) {
   const q = await prisma.question.findUnique({ where: { id: questionId } });
   if (!q) return jsonFail("题目不存在", 404);
 
-  // 归属校验：只允许重练「自己错题本内」的题目。
-  // 缺了这一步，任意登录用户可传任意 questionId 换取标准答案——
-  // 全站 4000+ 题可被脚本循环拖走（接口本身会返回 answer）。
-  // 同时这也堵住了"对陌生题反复作答"刷 AnswerLog 污染统计的路径。
+  // 归属校验：只允许重练「自己错题本内」的题目（P0-1 防答案拖库）。
   const wq = await prisma.wrongQuestion.findUnique({
     where: { userId_questionId: { userId: user.id, questionId } },
   });
@@ -60,53 +65,32 @@ export async function POST(req: NextRequest) {
   const earned = r.correct ? q.score : 0;
   const now = new Date();
 
+  hit(ipKey, RULE_PRACTICE_IP);
+
   const outcome = await prisma.$transaction(async (tx) => {
     await tx.answerLog.create({
-      data: { userId: user.id, questionId: q.id, given: g || null, correct: !!r.correct, earned },
+      data: {
+        userId: user.id,
+        questionId: q.id,
+        given: g || null,
+        correct: !!r.correct,
+        earned,
+        source: MASTERY_SOURCE.PRACTICE,
+      },
     });
 
-    let mastered = false;
-    let wrongCount = 0;
-    let streak = 0;
-
     if (r.correct) {
-      // 统计最近 threshold 次的连续答对数
-      const recent = await tx.answerLog.findMany({
-        where: { userId: user.id, questionId: q.id },
-        orderBy: { answeredAt: "desc" },
-        take: threshold,
-        select: { correct: true },
+      const res = await applyMasteryOnPracticeCorrect({
+        userId: user.id,
+        questionId: q.id,
+        threshold,
+        now,
+        tx,
       });
-      for (const l of recent) {
-        if (!l.correct) break;
-        streak++;
-      }
-      // 有未掌握错题记录且连续达标 → 转掌握
-      const wrong = await tx.wrongQuestion.findUnique({
-        where: { userId_questionId: { userId: user.id, questionId: q.id } },
-      });
-      if (wrong && !wrong.masteredAt && streak >= threshold) {
-        await tx.wrongQuestion.update({
-          where: { id: wrong.id },
-          data: { masteredAt: now },
-        });
-        mastered = true;
-      }
-    } else {
-      // 答错 → 仅当存在未掌握记录才 +1；无记录（越权调用）忽略
-      const wrong = await tx.wrongQuestion.findUnique({
-        where: { userId_questionId: { userId: user.id, questionId: q.id } },
-      });
-      if (wrong && !wrong.masteredAt) {
-        const updated = await tx.wrongQuestion.update({
-          where: { id: wrong.id },
-          data: { wrongCount: { increment: 1 } },
-          select: { wrongCount: true },
-        });
-        wrongCount = updated.wrongCount;
-      }
+      return { mastered: res.mastered, wrongCount: wq.wrongCount, streak: res.streak };
     }
-    return { mastered, wrongCount, streak };
+    const res = await applyMasteryOnWrong({ userId: user.id, questionId: q.id, now, tx });
+    return { mastered: false, wrongCount: res.wrongCount, streak: 0 };
   });
 
   return jsonOk({

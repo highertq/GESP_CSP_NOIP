@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { jsonOk, jsonFail } from "@/lib/api";
 import { gradeQuestion } from "@/lib/grade";
+import { applyMasteryOnWrong, MASTERY_SOURCE } from "@/lib/mastery";
 import { z } from "zod";
 
 // 整卷提交判分（需登录）
@@ -60,8 +61,8 @@ export async function POST(req: NextRequest) {
     correct: boolean | null;
     earned: number;
   }[] = [];
-  const logRows: { userId: string; questionId: string; given: string | null; correct: boolean; earned: number }[] = [];
-  const wrongUpserts: { userId: string; questionId: string; wrongCount: number }[] = [];
+  const logRows: { userId: string; questionId: string; given: string | null; correct: boolean; earned: number; source: string }[] = [];
+  const wrongQuestionIds: string[] = [];
 
   for (const q of questions) {
     const givenRaw = answers[q.id];
@@ -86,11 +87,12 @@ export async function POST(req: NextRequest) {
         given: g || null,
         correct: r.correct!,
         earned,
+        source: MASTERY_SOURCE.EXAM,
       });
     }
-    // 作答且答错 → 错题本 +1（未作答 / 缺失答案 / 大题不进）
+    // 作答且答错 → 进错题本（未作答 / 缺失答案 / 大题不进）；事务内统一走 applyMasteryOnWrong
     if (r.reason === "wrong") {
-      wrongUpserts.push({ userId: user.id, questionId: q.id, wrongCount: 1 });
+      wrongQuestionIds.push(q.id);
     }
   }
 
@@ -116,12 +118,9 @@ export async function POST(req: NextRequest) {
     if (logRows.length > 0) {
       await tx.answerLog.createMany({ data: logRows });
     }
-    for (const w of wrongUpserts) {
-      await tx.wrongQuestion.upsert({
-        where: { userId_questionId: { userId: w.userId, questionId: w.questionId } },
-        create: { userId: w.userId, questionId: w.questionId, wrongCount: 1 },
-        update: { wrongCount: { increment: 1 } },
-      });
+    // 答错 → 错题本 +1 且清空 masteredAt（已掌握的题答错也退回未掌握，P0-3/4 与重练路径一致）
+    for (const qid of wrongQuestionIds) {
+      await applyMasteryOnWrong({ userId: user.id, questionId: qid, now: new Date(), tx });
     }
     return attempt.id;
   });
