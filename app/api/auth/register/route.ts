@@ -4,8 +4,16 @@ import { registerSchema } from "@/lib/validation";
 import { hashPassword } from "@/lib/password";
 import { signSession, setSessionCookie } from "@/lib/auth";
 import { jsonFail, jsonOk } from "@/lib/api";
+import { clientIp, hit, isBlocked, RULE_REGISTER_IP } from "@/lib/ratelimit";
 
 export async function POST(req: NextRequest) {
+  // 同一 IP 注册数限制（此前完全裸奔，实测可连开 25 个账号）
+  const ip = clientIp(req.headers);
+  const ipKey = `register:ip:${ip}`;
+  if (isBlocked(ipKey, RULE_REGISTER_IP)) {
+    return jsonFail("注册过于频繁，请稍后再试", 429);
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -30,6 +38,8 @@ export async function POST(req: NextRequest) {
     },
     select: { id: true, username: true, nickname: true, role: true, createdAt: true },
   });
+
+  hit(ipKey, RULE_REGISTER_IP);
 
   const token = await signSession({ uid: user.id, role: user.role });
   await setSessionCookie(token);

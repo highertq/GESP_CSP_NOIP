@@ -40,6 +40,15 @@ export async function POST(req: NextRequest) {
   const q = await prisma.question.findUnique({ where: { id: questionId } });
   if (!q) return jsonFail("题目不存在", 404);
 
+  // 归属校验：只允许重练「自己错题本内」的题目。
+  // 缺了这一步，任意登录用户可传任意 questionId 换取标准答案——
+  // 全站 4000+ 题可被脚本循环拖走（接口本身会返回 answer）。
+  // 同时这也堵住了"对陌生题反复作答"刷 AnswerLog 污染统计的路径。
+  const wq = await prisma.wrongQuestion.findUnique({
+    where: { userId_questionId: { userId: user.id, questionId } },
+  });
+  if (!wq) return jsonFail("该题不在你的错题本中", 404);
+
   const threshold = await getThreshold();
   if (q.type === "PROGRAM") return jsonFail("编程大题不支持在线判分");
   if (q.answersMissing || !q.answer) {
