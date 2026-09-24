@@ -11,9 +11,16 @@ export function normalizeJudge(v: string): string {
   return v.trim();
 }
 
-/** 填空归一：去首尾空白 + 忽略大小写 */
+/** 全角 → 半角（含全角空格）：填空/单选输入常见中文输入法全角字符，归一后判分避免误伤 */
+export function toHalfWidth(v: string): string {
+  return v
+    .replace(/[\uFF01-\uFF5E]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .replace(/\u3000/g, " ");
+}
+
+/** 填空归一：去首尾空白 + 全角转半角 + 忽略大小写 */
 export function normFill(v: string): string {
-  return v.trim().toLowerCase();
+  return toHalfWidth(v).trim().toLowerCase();
 }
 
 /** 多选归一：去非字母、大写、排序 → "BD"（容忍乱序与全半角） */
@@ -45,7 +52,7 @@ export function gradeQuestion(
   let ok = false;
   switch (q.type) {
     case "CHOICE":
-      ok = g.toUpperCase() === ans.toUpperCase();
+      ok = toHalfWidth(g).toUpperCase() === toHalfWidth(ans).toUpperCase();
       break;
     case "MULTI_CHOICE":
       ok = normalizeMulti(g) === normalizeMulti(ans);

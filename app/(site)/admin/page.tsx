@@ -7,6 +7,7 @@ import { categoryLabel } from "@/lib/constants";
 import PaperToggle from "@/components/admin/paper-toggle";
 import UserOps from "@/components/admin/user-ops";
 import SettingsForm from "@/components/admin/settings-form";
+import ExplanationEditor from "@/components/admin/explanation-editor";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -18,6 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 const TABS = [
   { key: "overview", label: "仪表盘" },
   { key: "papers", label: "试卷管理" },
+  { key: "explanations", label: "题库解析" },
   { key: "users", label: "用户管理" },
   { key: "settings", label: "站点设置" },
 ] as const;
@@ -55,6 +57,7 @@ export default async function AdminPage({
 
       {tab === "overview" && <Overview />}
       {tab === "papers" && <Papers page={parseInt(sp.page ?? "1", 10) || 1} />}
+      {tab === "explanations" && <ExplanationEditor />}
       {tab === "users" && <Users page={parseInt(sp.page ?? "1", 10) || 1} currentUserId={me.id} />}
       {tab === "settings" && <Settings />}
     </div>

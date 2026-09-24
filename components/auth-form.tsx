@@ -14,10 +14,11 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   const [busy, setBusy] = useState(false);
   const [next, setNext] = useState<string | null>(null);
 
-  // 支持 /auth/login?next=/paper/xxx/do 回跳
+  // 支持 /auth/login?next=/paper/xxx/do 回跳。
+  // 安全校验：必须站内绝对路径 —— 拒绝协议相对地址（//evil.com）与反斜杠变体（/\evil.com）。
   useEffect(() => {
     const n = new URLSearchParams(window.location.search).get("next");
-    if (n && n.startsWith("/")) setNext(n);
+    if (n && n.startsWith("/") && !n.startsWith("//") && !n.includes("\\")) setNext(n);
   }, []);
 
   async function submit(e: React.FormEvent) {

@@ -25,10 +25,31 @@ function loadSaved(paperId: string): SavedState | null {
   }
 }
 
-export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
+export type ExamSession = {
+  attemptId: string;
+  deadlineAt: string; // ISO
+  serverNow: string; // ISO
+};
+
+type Props = {
+  bundle: ExamBundle;
+  /** 服务端已建好的作答会话（错题组卷用）：注入后跳过 /active + /start 流程 */
+  session?: ExamSession;
+  /** 退出/超时/已结束后的回跳地址（默认试卷详情页） */
+  exitHref?: string;
+  /** 401 登录回跳地址（默认本卷做题页） */
+  loginNext?: string;
+};
+
+export default function DoPaper({ bundle, session, exitHref, loginNext }: Props) {
   const router = useRouter();
   const { items } = bundle;
   const objectiveItems = useMemo(() => items.filter((i) => i.type !== "PROGRAM"), [items]);
+
+  // 进度缓存键：普通整卷按卷缓存；错题组卷按 attemptId 缓存（每次组卷题目集合不同，按卷缓存会串卷）
+  const storeKey = session ? `oj-do:${session.attemptId}` : STORE_KEY(bundle.paperId);
+  const exitPath = exitHref ?? `/paper/${bundle.paperSlug}`;
+  const loginPath = loginNext ?? `/paper/${bundle.paperSlug}/do`;
 
   const [cur, setCur] = useState<number>(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -53,7 +74,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
 
   // 进入加载态：短暂骨架后进入，避免本地续答恢复前闪烁
   useEffect(() => {
-    const saved = loadSaved(bundle.paperId);
+    const saved = loadSaved(storeKey);
     if (saved) {
       setAnswers(saved.answers);
       setFlagged(saved.flagged);
@@ -67,7 +88,16 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
   }, []);
 
   // 开考：优先续答已有的未超时 STARTED 记录；否则新建一条。拿到服务端 deadlineAt + 时钟基准。
+  // 错题组卷（session 注入）：会话由服务端创建，直接采用，跳过 /active + /start。
   useEffect(() => {
+    if (session) {
+      attemptIdRef.current = session.attemptId;
+      setAttemptId(session.attemptId);
+      setServerDeadline(new Date(session.deadlineAt).getTime());
+      setClockOffset(new Date(session.serverNow).getTime() - Date.now());
+      setStarted(true);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
@@ -103,6 +133,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle.paperId]);
 
   // 状态持久化（断线续答：只缓存答案与标记，倒计时以服务端为准）
@@ -110,7 +141,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
     const t = setTimeout(() => {
       try {
         localStorage.setItem(
-          STORE_KEY(bundle.paperId),
+          storeKey,
           JSON.stringify({ answers, flagged, cur } satisfies SavedState),
         );
       } catch {
@@ -118,7 +149,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
       }
     }, 300);
     return () => clearTimeout(t);
-  }, [answers, flagged, cur, bundle.paperId]);
+  }, [answers, flagged, cur, storeKey]);
 
   // 倒计时
   useEffect(() => {
@@ -183,14 +214,14 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
         const data = await res.json();
         if (!res.ok) {
           if (res.status === 401) {
-            localStorage.removeItem(STORE_KEY(bundle.paperId));
-            router.replace(`/auth/login?next=/paper/${bundle.paperSlug}/do`);
+            localStorage.removeItem(storeKey);
+            router.replace(`/auth/login?next=${encodeURIComponent(loginPath)}`);
             return;
           }
           if (res.status === 409) {
-            // 已结束 / 已超时：清理本地进度并回试卷页
-            localStorage.removeItem(STORE_KEY(bundle.paperId));
-            router.replace(`/paper/${bundle.paperSlug}`);
+            // 已结束 / 已超时：清理本地进度并回退出页
+            localStorage.removeItem(storeKey);
+            router.replace(exitPath);
             return;
           }
           doneRef.current = false;
@@ -198,7 +229,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
           setError(data.error || "交卷失败，请重试");
           return;
         }
-        localStorage.removeItem(STORE_KEY(bundle.paperId));
+        localStorage.removeItem(storeKey);
         router.push(`/attempt/${data.data.attemptId}`);
       } catch {
         doneRef.current = false;
@@ -206,7 +237,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
         setError(auto ? "自动交卷失败，请检查网络后手动交卷" : "网络异常，交卷失败，请重试");
       }
     },
-    [bundle.paperSlug, router],
+    [storeKey, exitPath, loginPath, router],
   );
 
   // 到时自动交卷（未开考不触发）
@@ -519,7 +550,7 @@ export default function DoPaper({ bundle }: { bundle: ExamBundle }) {
                 继续答题
               </button>
               <button
-                onClick={() => router.push(`/paper/${bundle.paperSlug}`)}
+                onClick={() => router.push(exitPath)}
                 className="btn btn-primary flex-1"
               >
                 保存并退出

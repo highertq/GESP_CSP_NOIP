@@ -75,6 +75,7 @@ model Question {
   content         String // Markdown（图片路径导入时已重写为站内 /assets/...）
   options         Json? // [{ "key": "A", "text": "..." }]
   answer          String? // 标准答案（服务端判分专用，绝不外发）
+  explanation     String? // 题目解析（Markdown，管理端维护；结果页/错题本展示）
   externalUrl     String? // PROGRAM 题跳转洛谷/OJ 的链接（管理端维护）
   answersMissing  Boolean @default(false) // 源数据缺答案，判分时不计入
   createdAt       DateTime @default(now())
@@ -101,6 +102,7 @@ model PaperAttempt {
   attemptNo   Int       @default(1) // 该用户该卷第几次作答
   deadlineAt  DateTime? // 服务端截止 = startedAt + timeLimit*60 + 30s grace
   submitToken String?   @unique // 每次开考生成，幂等/防重放
+  questionIds Json?     // P1-4 错题组卷：非空时按此题目集合判分（关联隐藏卷 wrong-quiz）
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   paper       Paper         @relation(fields: [paperId], references: [id], onDelete: Cascade)
   answers     AttemptAnswer[]

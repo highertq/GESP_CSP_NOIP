@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { prepareExam } from "@/lib/prepare-exam";
 import type { ExamItem } from "@/lib/prepare-exam";
+import { renderMarkdown } from "@/lib/md";
 import FavoriteButton from "@/components/favorite-button";
 import LuoguBlock from "@/components/luogu-block";
 
@@ -44,13 +45,28 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
   });
   if (!attempt || (attempt.userId !== user.id && user.role !== "ADMIN")) notFound();
 
-  const questions = await prisma.question.findMany({
-    where: { paperId: attempt.paperId },
-    orderBy: { seq: "asc" },
-  });
+  const quizIds = Array.isArray(attempt.questionIds)
+    ? (attempt.questionIds as unknown[]).filter((x): x is string => typeof x === "string")
+    : [];
+  const isQuiz = quizIds.length > 0; // P1-4 错题组卷的成绩单
+
+  const questions = isQuiz
+    ? (await prisma.question.findMany({ where: { id: { in: quizIds } } })).sort(
+        (a, b) => quizIds.indexOf(a.id) - quizIds.indexOf(b.id),
+      )
+    : await prisma.question.findMany({
+        where: { paperId: attempt.paperId },
+        orderBy: { seq: "asc" },
+      });
   const bundle = await prepareExam(attempt.paper, questions);
   const ansMap = new Map(attempt.answers.map((a) => [a.questionId, a]));
   const qMap = new Map(questions.map((q) => [q.id, q]));
+
+  // P1-5 解析预渲染（仅当存在解析时构建）
+  const explMap = new Map<string, string>();
+  for (const q of questions) {
+    if (q.explanation) explMap.set(q.id, await renderMarkdown(q.explanation));
+  }
 
   // 统计口径与提交一致：分母 = 可判分客观题总分
   const objective = bundle.items.filter((i) => i.type !== "PROGRAM" && !i.answersMissing);
@@ -78,9 +94,17 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
   return (
     <div className="space-y-5">
       <nav className="text-xs text-ink-3">
-        <Link href={`/paper/${attempt.paper.slug}`} className="hover:text-ink">
-          {attempt.paper.title}
-        </Link>
+        {isQuiz ? (
+          <>
+            <Link href="/wrong" className="hover:text-ink">
+              错题本
+            </Link>
+          </>
+        ) : (
+          <Link href={`/paper/${attempt.paper.slug}`} className="hover:text-ink">
+            {attempt.paper.title}
+          </Link>
+        )}
         <span className="mx-1.5">/</span>
         <span>成绩单</span>
       </nav>
@@ -110,10 +134,10 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
           </div>
           <div className="flex flex-col gap-2">
             <Link
-              href={`/paper/${attempt.paper.slug}/do`}
+              href={isQuiz ? "/wrong/quiz" : `/paper/${attempt.paper.slug}/do`}
               className="btn btn-primary"
             >
-              再练一遍
+              {isQuiz ? "再组一卷" : "再练一遍"}
             </Link>
             <Link href="/me" className="btn btn-outline">
               我的统计
@@ -257,6 +281,18 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
                             {state === "right" ? `+${a?.earned ?? item.score} 分` : state === "wrong" ? "0 分" : ""}
                           </span>
                         </div>
+
+                        {explMap.get(item.id) && (
+                          <details className="mt-2 rounded-lg border border-line bg-surface-2/60" open={state === "wrong" || state === "empty"}>
+                            <summary className="cursor-pointer select-none px-3 py-1.5 text-xs font-medium text-ink-2">
+                              查看解析
+                            </summary>
+                            <div
+                              className="px-3 pb-3 text-[13px] leading-relaxed md-body"
+                              dangerouslySetInnerHTML={{ __html: explMap.get(item.id)! }}
+                            />
+                          </details>
+                        )}
                       </>
                     )}
                   </div>

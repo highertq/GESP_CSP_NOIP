@@ -36,10 +36,16 @@ export async function POST(req: NextRequest) {
 
   const attempt = await prisma.paperAttempt.findUnique({
     where: { id: attemptId },
-    select: { id: true, userId: true, paperId: true, status: true, startedAt: true, deadlineAt: true },
+    select: { id: true, userId: true, paperId: true, status: true, startedAt: true, deadlineAt: true, questionIds: true },
   });
   if (!attempt || attempt.userId !== user.id) return jsonFail("作答记录不存在", 404);
   if (attempt.status !== "STARTED") return jsonFail("本次作答已结束", 409);
+
+  // P1-4 错题组卷：questionIds 非空 = 错题重练会话，按该集合判分（宿主卷无题目行）
+  const quizIds = Array.isArray(attempt.questionIds)
+    ? (attempt.questionIds as unknown[]).filter((x): x is string => typeof x === "string")
+    : [];
+  const isQuiz = quizIds.length > 0;
 
   const now = new Date();
   // 服务端截止时间：以 Date 归一化（兼顾 Date 与字符串两种返回形态），避免比较失效
@@ -56,13 +62,19 @@ export async function POST(req: NextRequest) {
     where: { id: attempt.paperId },
     select: { id: true, title: true, slug: true, published: true, timeLimit: true },
   });
-  if (!paper || !paper.published) return jsonFail("试卷不存在或已下线", 404);
+  // 宿主卷 published=false 属预期（错题组卷），仅普通整卷要求已上线
+  if (!paper || (!paper.published && !isQuiz)) return jsonFail("试卷不存在或已下线", 404);
 
-  const questions = await prisma.question.findMany({
-    where: { paperId: attempt.paperId },
-    orderBy: { seq: "asc" },
-    select: { id: true, seq: true, type: true, score: true, answer: true, answersMissing: true },
-  });
+  const questions = isQuiz
+    ? await prisma.question.findMany({
+        where: { id: { in: quizIds } },
+        select: { id: true, seq: true, type: true, score: true, answer: true, answersMissing: true },
+      })
+    : await prisma.question.findMany({
+        where: { paperId: attempt.paperId },
+        orderBy: { seq: "asc" },
+        select: { id: true, seq: true, type: true, score: true, answer: true, answersMissing: true },
+      });
   if (questions.length === 0) return jsonFail("该卷没有题目");
 
   // 仅接受本卷题目；未知 id 忽略

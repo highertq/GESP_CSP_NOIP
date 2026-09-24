@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth";
 import { CATEGORY_META } from "@/lib/constants";
 
@@ -24,7 +25,8 @@ export default async function MePage() {
     prisma.answerLog.count({ where: { userId: user.id, correct: true } }),
     prisma.wrongQuestion.count({ where: { userId: user.id, masteredAt: null } }),
     prisma.favorite.count({ where: { userId: user.id } }),
-    prisma.paperAttempt.count({ where: { userId: user.id, status: "SUBMITTED" } }),
+    // 整卷口径：排除错题组卷（questionIds 非空的专项小卷）
+    prisma.paperAttempt.count({ where: { userId: user.id, status: "SUBMITTED", questionIds: { equals: Prisma.AnyNull } } }),
   ]);
 
   const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
@@ -45,13 +47,56 @@ export default async function MePage() {
     WHERE l."userId" = ${user.id} AND l."answeredAt" >= now() - interval '30 days'
     GROUP BY date(l."answeredAt") ORDER BY day`;
 
-  // 最近成绩
+  // 最近成绩（整卷口径，排除错题组卷小卷）
   const recent = await prisma.paperAttempt.findMany({
-    where: { userId: user.id, status: "SUBMITTED" },
+    where: { userId: user.id, status: "SUBMITTED", questionIds: { equals: Prisma.AnyNull } },
     orderBy: { submittedAt: "desc" },
     take: 8,
     include: { paper: { select: { title: true, slug: true } } },
   });
+
+  // 同卷成绩趋势：同一份卷交过 ≥2 次 → 展示得分率变化（分母 = 该卷可判分客观题总分）
+  const trendRaw = await prisma.$queryRaw<{
+    id: string;
+    title: string;
+    earned: number;
+    max: number;
+    submittedAt: Date;
+  }[]>`
+    WITH mx AS (
+      SELECT q."paperId", SUM(q.score)::int AS max
+      FROM "Question" q
+      WHERE q.type <> 'PROGRAM' AND q."answersMissing" = false
+      GROUP BY q."paperId"
+    )
+    SELECT a."paperId" AS id, p.title, a."earnedScore"::int AS earned,
+           COALESCE(mx.max, 0) AS max, a."submittedAt" AS "submittedAt"
+    FROM "PaperAttempt" a
+    JOIN "Paper" p ON p.id = a."paperId"
+    JOIN mx ON mx."paperId" = a."paperId"
+    WHERE a."userId" = ${user.id} AND a.status = 'SUBMITTED'
+      AND a."questionIds" IS NULL AND mx.max > 0
+    ORDER BY a."submittedAt" ASC`;
+  const trendGroups = new Map<string, { title: string; points: { percent: number; at: Date }[] }>();
+  for (const r of trendRaw) {
+    const g = trendGroups.get(r.id) ?? { title: r.title, points: [] };
+    g.points.push({
+      percent: r.max > 0 ? Math.round((r.earned / r.max) * 100) : 0,
+      at: r.submittedAt,
+    });
+    trendGroups.set(r.id, g);
+  }
+  const trends = [...trendGroups.entries()]
+    .filter(([, g]) => g.points.length >= 2)
+    .map(([paperId, g]) => ({
+      paperId,
+      title: g.title,
+      points: g.points.slice(-10),
+      first: g.points[0].percent,
+      last: g.points[g.points.length - 1].percent,
+    }))
+    .sort((a, b) => b.points[b.points.length - 1].at.getTime() - a.points[a.points.length - 1].at.getTime())
+    .slice(0, 6);
 
   const actMap = new Map(actRaw.map((a) => [a.day.toISOString().slice(0, 10), Number(a.cnt)]));
   const days: { key: string; label: string; cnt: number }[] = [];
@@ -157,6 +202,45 @@ export default async function MePage() {
           </div>
         </section>
       </div>
+
+      {/* 同卷成绩趋势 */}
+      {trends.length > 0 && (
+        <section className="card p-5">
+          <h2 className="text-sm font-bold mb-3">同卷成绩趋势</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {trends.map((t) => {
+              const delta = t.last - t.first;
+              return (
+                <div key={t.paperId} className="rounded-xl border border-line p-4">
+                  <div className="flex items-baseline gap-2">
+                    <Link href={`/paper/${t.paperId}`} className="text-sm text-ink truncate hover:underline">
+                      {t.title}
+                    </Link>
+                    <span
+                      className={`ml-auto text-xs font-semibold tabular-nums ${delta > 0 ? "text-ok" : delta < 0 ? "text-err" : "text-ink-3"}`}
+                    >
+                      {t.first}% → {t.last}%{delta !== 0 && `（${delta > 0 ? "+" : ""}${delta}）`}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-end gap-1.5 h-16">
+                    {t.points.map((p, i) => (
+                      <div
+                        key={i}
+                        title={`${p.at.toLocaleString("zh-CN", { hour12: false })} · ${p.percent}%`}
+                        className={`flex-1 rounded-sm ${i === t.points.length - 1 ? "bg-ink" : "bg-ink/35"}`}
+                        style={{ height: `${Math.max(6, p.percent)}%` }}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-1.5 text-[10px] text-ink-4">
+                    共 {t.points.length} 次作答 · 柱高 = 得分率 · 最右为最近一次
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* 最近成绩 */}
       <section className="card p-5">

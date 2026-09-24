@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { jsonOk, jsonFail } from "@/lib/api";
 import { gradeQuestion } from "@/lib/grade";
+import { renderMarkdown } from "@/lib/md";
 import { clientIp, isBlocked, hit, RULE_PRACTICE_IP } from "@/lib/ratelimit";
 import {
   getThreshold,
@@ -97,6 +98,7 @@ export async function POST(req: NextRequest) {
     correct: r.correct,
     reason: r.reason,
     answer: q.answer,
+    explanationHtml: q.explanation ? await renderMarkdown(q.explanation) : null,
     score: q.score,
     earned,
     threshold,

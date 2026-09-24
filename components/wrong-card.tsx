@@ -18,11 +18,14 @@ export type WrongCardData = {
   wrongCount: number;
   favored: boolean;
   mastered: boolean;
+  /** 题目解析（服务端渲染好的 HTML；错题卡直接可展开看） */
+  explanationHtml?: string;
 };
 
 type Result = {
   correct: boolean;
   answer: string;
+  explanationHtml?: string | null;
   reason: string;
   streak: number;
   threshold: number;
@@ -243,6 +246,12 @@ function ResultBanner({ result, questionType }: { result: Result; questionType: 
           </span>
         )}
       </div>
+      {result.explanationHtml && (
+        <details className="mt-2 rounded-lg border border-line/40 bg-white/40" open={!result.correct}>
+          <summary className="cursor-pointer select-none px-3 py-1.5 text-xs font-medium">查看解析</summary>
+          <div className="px-3 pb-3 text-[13px] md-body" dangerouslySetInnerHTML={{ __html: result.explanationHtml }} />
+        </details>
+      )}
     </div>
   );
 }

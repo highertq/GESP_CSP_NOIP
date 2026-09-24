@@ -82,6 +82,7 @@ export default async function WrongPage({
       wrongCount: row.wrongCount,
       favored: favSet.has(q.id),
       mastered: !!row.masteredAt,
+      explanationHtml: q.explanation ? await renderMarkdown(q.explanation) : undefined,
     });
   }
 
@@ -98,19 +99,26 @@ export default async function WrongPage({
               : `整卷模拟答错的题自动收录，共 ${openCount} 题待攻克`}
           </p>
         </div>
-        <div className="flex rounded-lg border border-line overflow-hidden text-sm">
-          <Link
-            href="/wrong"
-            className={`px-4 py-1.5 ${!mastered ? "bg-ink text-white font-medium" : "text-ink-2 hover:bg-surface-2"}`}
-          >
-            未掌握 {openCount > 0 && <span className="opacity-70">({openCount})</span>}
-          </Link>
-          <Link
-            href="/wrong?tab=mastered"
-            className={`px-4 py-1.5 ${mastered ? "bg-ink text-white font-medium" : "text-ink-2 hover:bg-surface-2"}`}
-          >
-            已掌握
-          </Link>
+        <div className="flex items-center gap-3">
+          {!mastered && openCount > 0 && (
+            <Link href="/wrong/quiz" className="btn btn-primary btn-sm shrink-0">
+              组卷重练
+            </Link>
+          )}
+          <div className="flex rounded-lg border border-line overflow-hidden text-sm">
+            <Link
+              href="/wrong"
+              className={`px-4 py-1.5 ${!mastered ? "bg-ink text-white font-medium" : "text-ink-2 hover:bg-surface-2"}`}
+            >
+              未掌握 {openCount > 0 && <span className="opacity-70">({openCount})</span>}
+            </Link>
+            <Link
+              href="/wrong?tab=mastered"
+              className={`px-4 py-1.5 ${mastered ? "bg-ink text-white font-medium" : "text-ink-2 hover:bg-surface-2"}`}
+            >
+              已掌握
+            </Link>
+          </div>
         </div>
       </div>
 
